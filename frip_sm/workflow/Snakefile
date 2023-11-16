@@ -94,20 +94,3 @@ rule separate_reads:
         "{sample}.q30.mm.chr.sam"
     shell:
         "grep -v '.*hg.*' {input} > {output} && sed 's/mm10_chr/chr/' {output} > {output}.tmp && mv {output}.tmp {output}"
-
-# rule scaling:
-#     input:
-#         ChIP_sampleID="{ChIP_sample}/{ChIP_sample}.q30.dedup.sam",
-#         input_sampleID="{input_sample}/{input_sample}.q30.dedup.sam"
-#     output:
-#         "{ChIP_sample}/{ChIP_sample}.scale.bw"
-#     shell:
-#         "source /wynton/home/nora/erikaa/python_env/bin/activate && bamCoverage -b {input.ChIP_sampleID.q30.sort.bam} -o {output} -of bigwig --binSize 20 --scaleFactor `echo 'scale=20; {input.input_sampleID.q30.dedup.sam_hgreads} / {input.input_sampleID.q30.dedup.sam_mmreads} / {input.ChIP_sampleID.q30.dedup.sam_hgreads} * 15000000' | bc` && echo 'track type=bigWig name=\"{ChIP_sample}.scale\" visibility=full description=\"{ChIP_sample}\" windowingFunction=maximum maxHeightPixels=75,75,75 bigDataUrl=https://storage.googleapis.com/ucscbrowsertracks/{name}/{ChIP_sample}.scale.bw' >> {ChIP_sample}/{ChIP_sample}.stats"
-
-# rule ChIP_mapping:
-#     input:
-#         "{input_sample}.fastq.gz"
-#     output:
-#         "{ChIP_sample}/{ChIP_sample}.q30.mm.chr.sam"
-#     shell:
-#         "mkdir {ChIP_sample} && bowtie2 -p 6 -x {index} -U {input} > {ChIP_sample}/{ChIP_sample}.sam && samtools view -h -q 30 {ChIP_sample}/{ChIP_sample}.sam > {ChIP_sample}/{ChIP_sample}.q30.bam && rm {ChIP_sample}/{ChIP_sample}.sam && samtools sort {ChIP_sample}/{ChIP_sample}.q30.bam -o {ChIP_sample}/{ChIP_sample}.q30.sort.bam && samtools index {ChIP_sample}/{ChIP_sample}.q30.sort.bam && samtools markdup -f {ChIP_sample}/{ChIP_sample}.stats -r -d 100 {ChIP_sample}/{ChIP_sample}.q30.sort.bam {ChIP_sample}/{ChIP_sample}.q30.dedup.sam && rm {ChIP_sample}/{ChIP_sample}.q30.bam && grep -v '.*hg.*' {ChIP_sample}/{ChIP_sample}.q30.dedup.sam > {ChIP_sample}/{ChIP_sample}.q30.mm.sam && sed 's/mm10_chr/chr/' {ChIP_sample}/{ChIP_sample}.q30.mm.sam > {ChIP_sample}/{ChIP_sample}.q30.mm.chr.sam && rm {ChIP_sample}/{ChIP_sample}.q30.mm.sam"
