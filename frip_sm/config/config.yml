@@ -1,0 +1,40 @@
+#########################################
+# THIS IS A TYPICAL config.yml TEMPLATE
+# most of the settings present here
+# are GO for mapping production data
+# but nonetheless user must consider
+# carefully every presented option
+#########################################
+
+#########################################
+# When commmenting parameters out, make sure
+# that each section still has at least one
+# uncommented parameter, otherwise it
+# will not get properly parsed.
+#########################################
+
+
+
+#######################################
+# provide paths to your raw input data (fastq-s):
+#######################################
+# Fastqs can be provided as:
+# -- a pairs of relative/absolute paths
+# -- sra:<SRA_NUMBER>, optionally followed by the indices of the first and
+# the last entry in the SRA in the form of "?start=<first>&end=<last>
+
+# Alternatively, fastqs can be specified as either paths relative to the 
+# project folder or as absolute paths.
+input:
+    bowtie_index: '～/sc1/frip_sm_data/GRCh38_noalt_as/GRCh38_noalt_as'
+    downloaded_fastqs: '～/sc1/frip_sm_data/download_fastq'
+
+    genome:
+        assembly_name: 'hg38'
+        chrom_sizes_path: '/project/fudenber_735/genomes/hg38/hg38.analysisSet/hg38.analysisSet.chrom.sizes.reduced'
+
+output:
+    dirs:
+        maps_library: '～/sc1/frip_sm_data/maps_library'
+  
+   

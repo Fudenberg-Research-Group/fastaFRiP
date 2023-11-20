@@ -1,0 +1,96 @@
+
+index = config["input"]["bowtie_index"]
+fastq_data = config["input"]["downloaded_fastqs"]
+
+maps_library_folder = config["output"]["dirs"]["maps_library"]
+
+
+rule all:
+    input:
+        f"{maps_library_folder}/sample_1.sam",
+        f"{maps_library_folder}/sample_1.q30.bam",
+        f"{maps_library_folder}/sample_1.q30.fixed.bam",
+        f"{maps_library_folder}/sample_1.q30.fixed.sort.bam",
+        f"{maps_library_folder}/sample_1.q30.dedup.sam"
+        # f"{maps_library_folder}/sample_1_read_counts.txt"
+
+
+# rule fastqc:
+#     input:
+#         f"{{sample}}.fastq.gz"
+#     output:
+#         f"{{sample}}_fastqc.html",
+#         f"{{sample}}_fastqc.zip"
+#     shell:
+#         "fastqc --outdir . {input}"
+
+rule bowtie2_map:
+    input:
+        f"{fastq_data}/{{sample}}.fastq.gz"
+    output:
+        f"{maps_library_folder}/{{sample}}.sam"
+    shell:
+        "bowtie2 -p 6 -x {index} -U {input} -S {output}"
+
+rule samtools_filter:
+    input:
+        f"{maps_library_folder}/{{sample}}.sam"
+    output:
+        f"{maps_library_folder}/{{sample}}.q30.bam"
+    shell:
+        "samtools view -h -q 30 {input} > {output}"
+
+rule samtools_fixmate:
+    input:
+        f"{maps_library_folder}/{{sample}}.q30.bam"
+    output:
+        f"{maps_library_folder}/{{sample}}.q30.fixed.bam"
+    shell:
+        "samtools fixmate -m {input} {output}"
+
+rule samtools_sort:
+    input:
+        f"{maps_library_folder}/{{sample}}.q30.fixed.bam"
+    output:
+        f"{maps_library_folder}/{{sample}}.q30.fixed.sort.bam"
+    shell:
+        "samtools sort {input} -o {output}"
+
+rule samtools_markdup:
+    input:
+        f"{maps_library_folder}/{{sample}}.q30.fixed.sort.bam"
+    params:
+        stats_file_path = f"{maps_library_folder}/{{sample}}.stats"
+    output:
+        f"{maps_library_folder}/{{sample}}.q30.dedup.sam"
+    shell:
+        "samtools markdup -f {params.stats_file_path} -r -d 100 {input} {output}"
+
+# Count the number of reads that map to each genome and print the ratio
+rule count_reads:
+    input:
+        f"{maps_library_folder}/{{sample}}.q30.dedup.sam"
+    params:
+        stats_file_path = f"{maps_library_folder}/{{sample}}.stats"
+    output:
+        temp(f"{maps_library_folder}/{{sample}}_read_counts.txt")
+    shell:
+        """
+        mmreads=$(( `grep -c '.*mm.*' {input}` - 22 )) \
+        hgreads=$(( `grep -c '.*hg.*' {input}` - 26 )) \
+        echo -e "\nmm reads" $mmreads >> {params.stats_file_path} \
+        echo "hg38 reads" $hgreads >> {params.stats_file_path} \
+        echo "ratio of mouse to human reads is" >> {params.stats_file_path} \
+        echo "scale=2; $mmreads/$hgreads" | bc >> {params.stats_file_path}
+        touch {output}
+        """
+
+
+# Use grep to create a sam file with only the mm reads
+rule separate_reads:
+    input:
+        f"{maps_library_folder}/{{sample}}.q30.dedup.sam"
+    output:
+        "{sample}.q30.mm.chr.sam"
+    shell:
+        "grep -v '.*hg.*' {input} > {output} && sed 's/mm10_chr/chr/' {output} > {output}.tmp && mv {output}.tmp {output}"
