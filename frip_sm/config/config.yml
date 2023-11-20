@@ -26,48 +26,15 @@
 # Alternatively, fastqs can be specified as either paths relative to the 
 # project folder or as absolute paths.
 input:
-    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/GRCh38_noalt_as/GRCh38_noalt_as'
-    downloaded_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq'
+    bowtie_index: '～/sc1/frip_sm_data/GRCh38_noalt_as/GRCh38_noalt_as'
+    downloaded_fastqs: '～/sc1/frip_sm_data/download_fastq'
 
     genome:
         assembly_name: 'hg38'
         chrom_sizes_path: '/project/fudenber_735/genomes/hg38/hg38.analysisSet/hg38.analysisSet.chrom.sizes.reduced'
 
-# Control how Hi-C pairs are binned into contact maps, stored in .cool files.
-bin:
-    # Specify which resolutions should be included in the multi-resolution .cool file.
-    # The lowest (base) resolution _must_ be the common denominator of all other
-    # resolutions.
-    resolutions:
-        - 1048576
-        - 524288
-        - 262144
-        - 131072
-        - 65536
-        - 32768
-        - 16384
-        - 8192
-        - 4096
-        - 2048
-        - 1024
-
-    # Specify if the multi-resolution .cool output files should be balanced.
-    balance: True
-
-    # Pass additional parameters to cooler balance:
-    balance_options: ''
-
-    # Specify additional filters applied to pairs during binning.
-    # Multiple filters are allowed; for each filter, all pairs satisfying the
-    # given filter expression will be binned into a separate cooler.
-    # Filters are specified using the following syntax:
-    # {filter_name}: '{a valid Python expression}'
-    filters:
-        no_filter: ''
-        mapq_30: 'mapq1>=30 and mapq2>=30'
-
 output:
     dirs:
-        maps_library: '/home1/yxiao977/sc1/frip_sm_data/maps_library'
+        maps_library: '～/sc1/frip_sm_data/maps_library'
   
    
