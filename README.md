@@ -17,3 +17,9 @@ Some design questions:
 Some todos (list can expand):
 - [ ] files to specify requirements & environment needed
 - [ ] options for pipeline to run on regular ChIP or spike-in ChIP data
+
+
+Requirements:
+- distiller-sm (https://github.com/open2c/distiller-sm)
+- samtools (https://anaconda.org/bioconda/samtools)
+- bowtie2 (https://anaconda.org/bioconda/bowtie2)
