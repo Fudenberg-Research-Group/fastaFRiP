@@ -1,4 +1,3 @@
-
 index = config["input"]["bowtie_index"]
 fastq_data = config["input"]["downloaded_fastqs"]
 
@@ -93,4 +92,14 @@ rule separate_reads:
     output:
         "{sample}.q30.mm.chr.sam"
     shell:
-        "grep -v '.*hg.*' {input} > {output} && sed 's/mm10_chr/chr/' {output} > {output}.tmp && mv {output}.tmp {output}"
+        "grep -v '.*hg.*' {input} > {output} && sed 's/mm10_chr/chr/' {output} > {output}.tmp && mv {output}.tmp {output}
+
+
+"
+rule sam_to_bed:
+    input:
+        f"{maps_library_folder}/{{sample}}.q30.dedup.sam"
+    output:
+        "{sample}_q30.dedup"
+    shell:
+	 macs2 callpeak -t {input} -n {output}
