@@ -1,96 +1,269 @@
 
+import glob
+
+###############
+# Input
+###############
+chip_fastqs_path = config["input"]["ChIP_fastqs"]
+control_fastqs_path = config["input"]["Control_fastqs"]
+
+###############
+# Parameters
+###############
 index = config["input"]["bowtie_index"]
-fastq_data = config["input"]["downloaded_fastqs"]
+process = config["common_params"]["process"]
+include_spikein = config["common_params"]["include_spikein"]
+index_primary = config["spikein_params"]["index_primary"]
+index_spikein = config["spikein_params"]["index_spikein"]
+binsize = config["spikein_params"]["binsize"]
 
-maps_library_folder = config["output"]["dirs"]["maps_library"]
+quality = config["samtools_params"]["quality"]
+distance = config["samtools_params"]["distance"]
 
+###############
+# Output path
+###############
+ChIP_result_folder = config["output"]["ChIP_output_path"]
+Control_result_folder = config["output"]["Control_output_path"]
+
+#############################################
+# Create lists of output filenames
+#############################################
+sample_filenames = glob.glob(chip_fastqs_path+'/*.fastq.gz')
+samples = [s.split('/')[-1].replace('.fastq.gz', '') for s in sample_filenames]
+sam = expand(
+        f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.sam",
+        sample_name=samples
+    )
+
+bam = expand(
+        f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.bam",
+        sample_name=samples
+    )
+fixed_bam = expand(
+        f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.fixed.bam",
+        sample_name=samples
+    )
+
+fixed_sort_bam = expand(
+        f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.fixed.sort.bam",
+        sample_name=samples
+    )
+
+dedup_sam = expand(
+        f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup.sam",
+        sample_name=samples
+    )
+if include_spikein:
+    sam_stats = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.spikein.stats",
+            sample_name=samples
+        )
+
+    primary_sort_bam = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort.bam",
+            sample_name=samples
+        )
+
+    spikein_sort_bam = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_spikein}.sort.bam",
+            sample_name=samples
+        )
+else:
+    sam_stats = []
+    primary_sort_bam = []
+    spikein_sort_bam = []
+
+if control_fastqs_path == '' :
+    ctrl_sam = []
+    ctrl_bam = []
+    ctrl_fixed_bam = []
+    ctrl_fixed_sort_bam = []
+    ctrl_dedup_sam = []
+    ctrl_sam_stats = []
+    ctrl_primary_sort_bam = []
+    ctrl_spikein_sort_bam = []
+else:
+    sample_filenames = glob.glob(control_fastqs_path+'/*.fastq.gz')
+    samples = [s.split('/')[-1].replace('.fastq.gz', '') for s in sample_filenames]
+    ctrl_sam = expand(
+            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.sam",
+            sample_name=samples
+        )
+
+    ctrl_bam = expand(
+            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.bam",
+            sample_name=samples
+        )
+    ctrl_fixed_bam = expand(
+            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.fixed.bam",
+            sample_name=samples
+        )
+
+    ctrl_fixed_sort_bam = expand(
+            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.fixed.sort.bam",
+            sample_name=samples
+        )
+
+    ctrl_dedup_sam = expand(
+            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup.sam",
+            sample_name=samples
+        )
+
+    if include_spikein:
+        ctrl_sam_stats = expand(
+                f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.stats",
+                sample_name=samples
+            )
+
+        ctrl_primary_sort_bam = expand(
+                f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort.bam",
+                sample_name=samples
+            )
+
+        spikein_sort_bam = expand(
+                f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_spikein}.sort.bam",
+                sample_name=samples
+            )
+    else:
+        ctrl_sam_stats = []
+        ctrl_primary_sort_bam = []
+        spikein_sort_bam = []
+
+
+sample_filename = "sample_1"
 
 rule all:
     input:
-        f"{maps_library_folder}/sample_1.sam",
-        f"{maps_library_folder}/sample_1.q30.bam",
-        f"{maps_library_folder}/sample_1.q30.fixed.bam",
-        f"{maps_library_folder}/sample_1.q30.fixed.sort.bam",
-        f"{maps_library_folder}/sample_1.q30.dedup.sam"
-        # f"{maps_library_folder}/sample_1_read_counts.txt"
+        sam,
+        ctrl_sam,
+        bam,
+        ctrl_bam,
+        fixed_bam,
+        ctrl_fixed_bam,
+        fixed_sort_bam,
+        ctrl_fixed_sort_bam,
+        dedup_sam,
+        ctrl_dedup_sam,
+        sam_stats,
+        ctrl_sam_stats,
+        primary_sort_bam,
+        ctrl_primary_sort_bam,
+        spikein_sort_bam,
+        ctrl_spikein_sort_bam
 
-
-# rule fastqc:
-#     input:
-#         f"{{sample}}.fastq.gz"
-#     output:
-#         f"{{sample}}_fastqc.html",
-#         f"{{sample}}_fastqc.zip"
-#     shell:
-#         "fastqc --outdir . {input}"
-
+##############################
+# Alignment starts here
+##############################
 rule bowtie2_map:
     input:
-        f"{fastq_data}/{{sample}}.fastq.gz"
+        f"{chip_fastqs_path}/{{sample}}.fastq.gz"
     output:
-        f"{maps_library_folder}/{{sample}}.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.sam"
     shell:
-        "bowtie2 -p 6 -x {index} -U {input} -S {output}"
+        "bowtie2 -p {process} -x {index} -U {input} -S {output}"
 
 rule samtools_filter:
     input:
-        f"{maps_library_folder}/{{sample}}.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.sam"
     output:
-        f"{maps_library_folder}/{{sample}}.q30.bam"
+        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q30.bam")
     shell:
-        "samtools view -h -q 30 {input} > {output}"
+        "samtools view -h -q {quality} {input} > {output}"
 
 rule samtools_fixmate:
     input:
-        f"{maps_library_folder}/{{sample}}.q30.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q30.bam"
     output:
-        f"{maps_library_folder}/{{sample}}.q30.fixed.bam"
+        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.bam")
     shell:
         "samtools fixmate -m {input} {output}"
 
 rule samtools_sort:
     input:
-        f"{maps_library_folder}/{{sample}}.q30.fixed.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.bam"
     output:
-        f"{maps_library_folder}/{{sample}}.q30.fixed.sort.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
     shell:
-        "samtools sort {input} -o {output}"
+        "samtools sort -@{process} {input} -o {output}"
 
 rule samtools_markdup:
     input:
-        f"{maps_library_folder}/{{sample}}.q30.fixed.sort.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
     params:
-        stats_file_path = f"{maps_library_folder}/{{sample}}.stats"
+        stats_file_path = f"{{maps}}/{{sample_name}}/{{sample}}.markdup.stats"
     output:
-        f"{maps_library_folder}/{{sample}}.q30.dedup.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
     shell:
-        "samtools markdup -f {params.stats_file_path} -r -d 100 {input} {output}"
+        "samtools markdup -f {params.stats_file_path} -r -d {distance} {input} {output}"
 
+############################################################
+# The following procedure is for Spike-in ChIP protocol
+############################################################
 # Count the number of reads that map to each genome and print the ratio
-rule count_reads:
+rule spikein_stats:
     input:
-        f"{maps_library_folder}/{{sample}}.q30.dedup.sam"
-    params:
-        stats_file_path = f"{maps_library_folder}/{{sample}}.stats"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
     output:
-        temp(f"{maps_library_folder}/{{sample}}_read_counts.txt")
+        f"{{maps}}/{{sample_name}}/{{sample}}.spikein.stats"
     shell:
         """
-        mmreads=$(( `grep -c '.*mm.*' {input}` - 22 )) \
-        hgreads=$(( `grep -c '.*hg.*' {input}` - 26 )) \
-        echo -e "\nmm reads" $mmreads >> {params.stats_file_path} \
-        echo "hg38 reads" $hgreads >> {params.stats_file_path} \
-        echo "ratio of mouse to human reads is" >> {params.stats_file_path} \
-        echo "scale=2; $mmreads/$hgreads" | bc >> {params.stats_file_path}
-        touch {output}
+        primary_reads=$(( `grep -c '.*{index_primary}.*' {input}` - 22 )) 
+        spikein_reads=$(( `grep -c '.*{index_spikein}.*' {input}` - 26 )) 
+        echo -e "{index_primary}_reads=$primary_reads" >> {output} 
+        echo "{index_spikein}_reads=$spikein_reads" >> {output} 
+        echo "ratio of {index_primary} to {index_spikein} reads is" >> {output} 
+        echo "scale=2; $primary_reads/$spikein_reads" | bc >> {output} 
         """
-
 
 # Use grep to create a sam file with only the mm reads
 rule separate_reads:
     input:
-        f"{maps_library_folder}/{{sample}}.q30.dedup.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
+    params:
+        primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_primary}.sam",
+        primary_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_primary}.chr.sam",
+        spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_spikein}.sam",
+        spikein_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_spikein}.chr.sam"
+
     output:
-        "{sample}.q30.mm.chr.sam"
+        output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_primary}.sort.bam",
+        output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_spikein}.sort.bam"
     shell:
-        "grep -v '.*hg.*' {input} > {output} && sed 's/mm10_chr/chr/' {output} > {output}.tmp && mv {output}.tmp {output}"
+        """
+        grep -v '.*{index_spikein}.*' {input} > {params.primary_sam_tmp}
+        sed 's/{index_primary}_chr/chr/' {params.primary_sam_tmp} > {params.primary_chr_sam_tmp}
+        rm {params.primary_sam_tmp}
+        samtools sort {params.primary_chr_sam_tmp} -o {output.output1}
+        rm {params.primary_chr_sam_tmp}
+        samtools index {output.output1}
+
+        grep -v '.*{index_primary}.*' {input} > {params.spikein_sam_tmp}
+        sed 's/{index_spikein}_chr/chr/' {params.spikein_sam_tmp} > {params.spikein_chr_sam_tmp}
+        rm {params.spikein_sam_tmp}
+        samtools sort {params.spikein_chr_sam_tmp} -o {output.output2}
+        rm {params.spikein_chr_sam_tmp}
+        samtools index {output.output2}
+        """
+
+
+##############################
+# Spike-in Normalization
+##############################
+rule scaling:
+    input:
+        ChIP_stats = f"{{ChIP_fastqs_maps}}/{{sample_name}}/{{sample}}.spikein.stats",
+        ctrl_stats = f"{{Control_fastqs_maps}}/{{sample_name}}/{{sample}}.spikein.stats",
+        ChIP_bam = f"{{ChIP_fastqs_maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
+    output:
+        f"{{ChIP_fastqs_maps}}/{{sample_name}}/{{sample}}.scale.bw"
+    shell:
+        """
+        primary_reads=$(awk -F'=' '/{index_primary}_reads/{print $2}' {input.ChIP_stats}) 
+        spikein_reads=$(awk -F'=' '/{index_spikein}_reads/{print $2}' {input.ChIP_stats}) 
+        ctrl_primary_reads=$(awk -F'=' '/{index_primary}_reads/{print $2}' {input.ctrl_stats})  
+        ctrl_spikein_reads=$(awk -F'=' '/{index_spikein}_reads/{print $2}' {input.ctrl_stats})
+        factor=`echo "scale=20; $ctrl_spikein_reads / $ctrl_primary_reads / $spikein_reads * 15000000" | bc`
+        echo "Scaling_factor=$factor" >> {input.ChIP_stats}
+        bamCoverage -b {input.ChIP_bam} -o {output} -of bigwig --binSize {binsize} --scaleFactor $factor
+        """
