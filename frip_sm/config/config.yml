@@ -18,23 +18,27 @@
 #######################################
 # provide paths to your raw input data (fastq-s):
 #######################################
-# Fastqs can be provided as:
-# -- a pairs of relative/absolute paths
-# -- sra:<SRA_NUMBER>, optionally followed by the indices of the first and
-# the last entry in the SRA in the form of "?start=<first>&end=<last>
 
-# Alternatively, fastqs can be specified as either paths relative to the 
-# project folder or as absolute paths.
 input:
-    bowtie_index: '～/sc1/frip_sm_data/GRCh38_noalt_as/GRCh38_noalt_as'
-    downloaded_fastqs: '～/sc1/frip_sm_data/download_fastq'
+    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/hg38_mm10/hg38_mm10_index'
+    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq'
+    Control_fastqs: '/home1/yxiao977/sc1/frip_sm_data/control_fastq'
 
-    genome:
-        assembly_name: 'hg38'
-        chrom_sizes_path: '/project/fudenber_735/genomes/hg38/hg38.analysisSet/hg38.analysisSet.chrom.sizes.reduced'
+common_params:
+    processes: 6
+    include_spikein: true
+
+samtools_params:
+    quality: 30
+    distance: 100
+
+spikein_params:
+    index_primary: 'mm10' 
+    index_spikein: 'hg38'
+    binsize: 20
 
 output:
-    dirs:
-        maps_library: '～/sc1/frip_sm_data/maps_library'
+    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps'
+    Control_output_path: '/home1/yxiao977/sc1/frip_sm_data/Control_fastqs_maps'
   
    
