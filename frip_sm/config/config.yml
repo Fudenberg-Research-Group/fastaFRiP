@@ -22,10 +22,10 @@
 input:
     bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/hg38_mm10/hg38_mm10_index'
     ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq'
-    Control_fastqs: ''
+    Control_fastqs: '/home1/yxiao977/sc1/frip_sm_data/control_fastq'
 
 common_params:
-    process: 6
+    processes: 6
     include_spikein: true
 
 samtools_params:
@@ -39,6 +39,6 @@ spikein_params:
 
 output:
     ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps'
-    Control_output_path: '/home1/yxiao977/sc1/frip_sm_data/Control_fastqs_mapsy'
+    Control_output_path: '/home1/yxiao977/sc1/frip_sm_data/Control_fastqs_maps'
   
    
