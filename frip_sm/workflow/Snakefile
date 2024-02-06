@@ -224,7 +224,7 @@ rule samtools_markdup:
     shell:
         "samtools markdup -f {params.stats_file_path} -r -d {distance} {input} {output}"
     
-    rule bam_to_bed:
+rule bam_to_bed:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
     output:
