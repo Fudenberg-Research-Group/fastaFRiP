@@ -18,11 +18,12 @@
 #######################################
 # provide paths to your raw input data (fastq-s):
 #######################################
-
 input:
-    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/hg38_mm10/hg38_mm10_index'
-    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq'
-    Control_fastqs: '/home1/yxiao977/sc1/frip_sm_data/control_fastq'
+    bowtie_index: '/home1/kadvani/sc1/frip_tutorial/fastaq/bwt_index/At.TAIR10'
+    ChIP_fastqs: '/home1/kadvani/sc1/frip_tutorial/fastaq/ATAC_paired/ChIP_fastqs'
+    # Control_fastqs: '/home1/kadvani/sc1/fastaFRiP_data/control'
+    Control_fastqs: '/home1/kadvani/sc1/frip_tutorial/fastaq/ATAC_paired/control'
+
 
 common_params:
     processes: 6
@@ -38,7 +39,7 @@ spikein_params:
     binsize: 20
 
 output:
-    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps'
-    Control_output_path: '/home1/yxiao977/sc1/frip_sm_data/Control_fastqs_maps'
+    ChIP_output_path: '/home1/kadvani/sc1/frip_tutorial/fastaq/output/ChIP_output_path'
+    Control_output_path: '/home1/kadvani/sc1/frip_tutorial/fastaq/output/control_output_path'
   
    
