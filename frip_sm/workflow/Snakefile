@@ -223,7 +223,10 @@ rule samtools_markdup:
         f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
     shell:
         "samtools markdup -f {params.stats_file_path} -r -d {distance} {input} {output}"
-    
+
+############################################################
+# The following functions is used to create bed file from bam file
+############################################################
 rule bam_to_bed:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
