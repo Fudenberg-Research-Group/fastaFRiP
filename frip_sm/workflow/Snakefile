@@ -4,9 +4,12 @@ import glob
 ###############
 # Input
 ###############
+configfile: "/home1/kadvani/updated_frip/fastaFRiP/frip_sm/config/config.yml"
+
 chip_fastqs_path = config["input"]["ChIP_fastqs"]
 control_fastqs_path = config["input"]["Control_fastqs"]
 
+print(chip_fastqs_path)
 ###############
 # Parameters
 ###############
@@ -16,7 +19,6 @@ include_spikein = config["common_params"]["include_spikein"]
 index_primary = config["spikein_params"]["index_primary"]
 index_spikein = config["spikein_params"]["index_spikein"]
 binsize = config["spikein_params"]["binsize"]
-
 quality = config["samtools_params"]["quality"]
 distance = config["samtools_params"]["distance"]
 
@@ -224,6 +226,14 @@ rule samtools_markdup:
         f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
     shell:
         "samtools markdup -f {params.stats_file_path} -r -d {distance} {input} {output}"
+    
+    rule sam_to_bed:
+    input:
+        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
+    output:
+        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bed"
+    shell:
+        macs2 callpeak -t {input} -n {output}
 
 ############################################################
 # The following procedure is for Spike-in ChIP protocol
