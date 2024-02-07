@@ -20,13 +20,13 @@
 #################################################
 
 input:
-    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/hg38_mm10/hg38_mm10_index'
+    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/GRCh38_noalt_as/GRCh38_noalt_as' # **/path_to_index_directory/file_prefix
     ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq'
-    Control_fastqs: '/home1/yxiao977/sc1/frip_sm_data/control_fastq'
+    Control_fastqs: ''
 
 common_params:
     processes: 6
-    include_spikein: true
+    include_spikein: false
 
 samtools_params:
     quality: 30
@@ -34,7 +34,7 @@ samtools_params:
 
 spikein_params:
     index_primary: 'mm10' 
-    index_spikein: 'hg38'
+    index_spikein: ''
     binsize: 20
 
 output:

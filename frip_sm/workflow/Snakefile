@@ -1,5 +1,5 @@
-
 import glob
+import re
 
 ###############
 # Input
@@ -41,8 +41,9 @@ if index_spikein != "" and index_spikein != None:
 #############################################
 # Create lists of output filenames
 #############################################
-sample_filenames = glob.glob(chip_fastqs_path+'/*.fastq.gz')
-samples = [s.split('/')[-1].replace('.fastq.gz', '') for s in sample_filenames]
+sample_filenames = glob.glob(chip_fastqs_path+'/*.fastq*')
+pattern = r"\.fastq.*?"
+samples = [re.sub(pattern, '', s.split('/')[-1]) for s in sample_filenames]
 sam = expand(
         f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.sam",
         sample_name=samples
@@ -111,8 +112,9 @@ if control_fastqs_path == '' :
     ctrl_primary_sort_bam = []
     ctrl_spikein_sort_bam = []
 else:
-    sample_filenames = glob.glob(control_fastqs_path+'/*.fastq.gz')
-    samples = [s.split('/')[-1].replace('.fastq.gz', '') for s in sample_filenames]
+    sample_filenames = glob.glob(control_fastqs_path+'/*.fastq*')
+    pattern = r"\.fastq.*?"
+    samples = [re.sub(pattern, '', s.split('/')[-1]) for s in sample_filenames]
     ctrl_sam = expand(
             f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.sam",
             sample_name=samples
@@ -179,14 +181,25 @@ rule all:
         rescale_bw,
         peaks_bed,
 
+def get_input(wildcards):
+    gzipped = f"{chip_fastqs_path}/{wildcards.sample}.fastq.gz"
+    plain = f"{chip_fastqs_path}/{wildcards.sample}.fastq"
+    if os.path.exists(gzipped):
+        return gzipped
+    elif os.path.exists(plain):
+        return plain
+    raise FileNotFoundError(f"No input file found for sample {wildcards.sample}, here's the path{gzipped}, {wildcards.sample}")
+
 ##############################
 # Alignment starts here
 ##############################
 rule bowtie2_map:
     input:
-        f"{chip_fastqs_path}/{{sample}}.fastq.gz"
+        get_input
     conda:
         "envs/fasta_frip_env.yml"
+    wildcard_constraints:
+        sample="[a-zA-Z0-9_-]+"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.sam"
     shell:
@@ -285,43 +298,6 @@ rule separate_reads:
         rm {params.spikein_prefix_chr_sam_tmp}
         samtools index {output.output2}
         """
-
-# rule separate_reads:
-#     input:
-#         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
-#     params:
-#         primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sam",
-#         primary_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.chr.sam",
-#         primary_fixed_bam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.fixed.bam",
-#         spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sam",
-#         spikein_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.chr.sam",
-#         spikein_fixed_bam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.fixed.bam",
-#     conda:
-#         "envs/fasta_frip_env.yml"
-#     output:
-#         output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam",
-#         output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sort.bam"
-#     shell:
-#         """
-#         grep -v '.*{index_spikein}.*' {input} > {params.primary_sam_tmp}
-#         sed 's/{index_primary}_chr/chr/' {params.primary_sam_tmp} > {params.primary_prefix_chr_sam_tmp}
-#         rm {params.primary_sam_tmp}
-#         samtools fixmate -m {params.primary_prefix_chr_sam_tmp} {params.primary_fixed_bam_tmp}
-#         rm {params.primary_prefix_chr_sam_tmp}
-#         samtools sort {params.primary_fixed_bam_tmp} -o {output.output1}
-#         rm {params.primary_fixed_bam_tmp}
-#         samtools index {output.output1}
-
-#         grep -v '.*{index_primary}.*' {input} > {params.spikein_sam_tmp}
-#         sed 's/{index_spikein}_chr/chr/' {params.spikein_sam_tmp} > {params.spikein_prefix_chr_sam_tmp}
-#         rm {params.spikein_sam_tmp}
-#         samtools fixmate -m {params.spikein_prefix_chr_sam_tmp} {params.spikein_fixed_bam_tmp}
-#         rm {params.spikein_prefix_chr_sam_tmp}
-#         samtools sort {params.spikein_fixed_bam_tmp} -o {output.output2}
-#         rm {params.spikein_fixed_bam_tmp}
-#         samtools index {output.output2}
-#         """
-
 
 ##############################
 # Spike-in Normalization
