@@ -6,18 +6,18 @@
 # carefully every presented option
 #########################################
 
-#########################################
+############################################
 # When commmenting parameters out, make sure
 # that each section still has at least one
 # uncommented parameter, otherwise it
 # will not get properly parsed.
-#########################################
+############################################
 
 
 
-#######################################
+#################################################
 # provide paths to your raw input data (fastq-s):
-#######################################
+#################################################
 
 input:
     bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/hg38_mm10/hg38_mm10_index'
@@ -40,5 +40,10 @@ spikein_params:
 output:
     ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps'
     Control_output_path: '/home1/yxiao977/sc1/frip_sm_data/Control_fastqs_maps'
-  
+
+
+##############################################################################################
+# Run the pipeline with: 
+#       snakemake --use-conda --cores $Ncores --configfile config/config.yml
+##############################################################################################
    

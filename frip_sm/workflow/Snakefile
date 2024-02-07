@@ -86,11 +86,19 @@ if include_spikein:
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
             sample_name=samples
         )
+    peaks_bed = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort_summits.bed",
+            sample_name=samples
+        )
 else:
     sam_stats = []
     primary_sort_bam = []
     spikein_sort_bam = []
     rescale_bw = []
+    peaks_bed = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.fixed.sort_summits.bed",
+            sample_name=samples
+        )
 
 # Control output files
 if control_fastqs_path == '' :
@@ -168,7 +176,8 @@ rule all:
         ctrl_primary_sort_bam,
         spikein_sort_bam,
         ctrl_spikein_sort_bam,
-        rescale_bw
+        rescale_bw,
+        peaks_bed,
 
 ##############################
 # Alignment starts here
@@ -189,39 +198,39 @@ rule samtools_filter:
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q30.bam")
+        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam")
     shell:
         "samtools view -h -q {quality} {input} > {output}"
 
 rule samtools_fixmate:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.bam")
+        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam")
     shell:
         "samtools fixmate -m {input} {output}"
 
 rule samtools_sort:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     shell:
         "samtools sort -@{process} {input} -o {output}"
 
 rule samtools_markdup:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     params:
         stats_file_path = f"{{maps}}/{{sample_name}}/{{sample}}.markdup.stats"
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
     shell:
         "samtools markdup -f {params.stats_file_path} -r -d {distance} {input} {output}"
 
@@ -231,7 +240,7 @@ rule samtools_markdup:
 # Count the number of reads that map to each genome and print the ratio
 rule spikein_stats:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
@@ -249,17 +258,17 @@ rule spikein_stats:
 # Use grep to create a sam file with only the mm reads
 rule separate_reads:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
     params:
-        primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_primary}.sam",
-        primary_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_primary}.chr.sam",
-        spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_spikein}.sam",
-        spikein_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_spikein}.chr.sam"
+        primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sam",
+        primary_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.chr.sam",
+        spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sam",
+        spikein_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.chr.sam",
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_primary}.sort.bam",
-        output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_spikein}.sort.bam"
+        output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam",
+        output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sort.bam"
     shell:
         """
         grep -v '.*{index_spikein}.*' {input} > {params.primary_sam_tmp}
@@ -277,6 +286,42 @@ rule separate_reads:
         samtools index {output.output2}
         """
 
+# rule separate_reads:
+#     input:
+#         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
+#     params:
+#         primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sam",
+#         primary_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.chr.sam",
+#         primary_fixed_bam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.fixed.bam",
+#         spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sam",
+#         spikein_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.chr.sam",
+#         spikein_fixed_bam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.fixed.bam",
+#     conda:
+#         "envs/fasta_frip_env.yml"
+#     output:
+#         output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam",
+#         output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sort.bam"
+#     shell:
+#         """
+#         grep -v '.*{index_spikein}.*' {input} > {params.primary_sam_tmp}
+#         sed 's/{index_primary}_chr/chr/' {params.primary_sam_tmp} > {params.primary_prefix_chr_sam_tmp}
+#         rm {params.primary_sam_tmp}
+#         samtools fixmate -m {params.primary_prefix_chr_sam_tmp} {params.primary_fixed_bam_tmp}
+#         rm {params.primary_prefix_chr_sam_tmp}
+#         samtools sort {params.primary_fixed_bam_tmp} -o {output.output1}
+#         rm {params.primary_fixed_bam_tmp}
+#         samtools index {output.output1}
+
+#         grep -v '.*{index_primary}.*' {input} > {params.spikein_sam_tmp}
+#         sed 's/{index_spikein}_chr/chr/' {params.spikein_sam_tmp} > {params.spikein_prefix_chr_sam_tmp}
+#         rm {params.spikein_sam_tmp}
+#         samtools fixmate -m {params.spikein_prefix_chr_sam_tmp} {params.spikein_fixed_bam_tmp}
+#         rm {params.spikein_prefix_chr_sam_tmp}
+#         samtools sort {params.spikein_fixed_bam_tmp} -o {output.output2}
+#         rm {params.spikein_fixed_bam_tmp}
+#         samtools index {output.output2}
+#         """
+
 
 ##############################
 # Spike-in Normalization
@@ -285,7 +330,7 @@ rule rescaling:
     input:
         ChIP_stats = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.spikein.stats",
         ctrl_stats = f"{Control_result_folder}/{{sample_name}}/{{sample}}.spikein.stats",
-        ChIP_bam = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q30.{index_primary}.sort.bam"
+        ChIP_bam = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
@@ -300,3 +345,19 @@ rule rescaling:
         echo "Scaling_factor=$factor" >> {input.ChIP_stats}
         bamCoverage -b {input.ChIP_bam} -o {output} -of bigwig --binSize {binsize} --scaleFactor $factor
         """
+
+##############################
+# Calling peaks
+##############################
+rule bam_to_bed:
+    input:
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.sort.bam"
+    params:
+        output_prefix = f"{{sample}}.q{quality}.{{type}}.sort", 
+        output_dir = f"{{maps}}/{{sample_name}}/"
+    conda:
+        "envs/fasta_frip_env.yml"
+    output:
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.sort_summits.bed"
+    shell:
+        "macs2 callpeak -t {input} -n {params.output_prefix} --outdir {params.output_dir}"
