@@ -20,6 +20,12 @@ binsize = config["spikein_params"]["binsize"]
 quality = config["samtools_params"]["quality"]
 distance = config["samtools_params"]["distance"]
 
+no_model  = config["macs2_params"]["no_model"]
+if no_model:
+    nomodel_option = "--nomodel"
+else:
+    nomodel_option = ""
+
 ###############
 # Output path
 ###############
@@ -233,7 +239,10 @@ rule samtools_sort:
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     shell:
-        "samtools sort -@{process} {input} -o {output}"
+        """
+        samtools sort -@{process} {input} -o {output}
+        samtools index {output}
+        """
 
 rule samtools_markdup:
     input:
@@ -336,4 +345,4 @@ rule bam_to_bed:
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.sort_summits.bed"
     shell:
-        "macs2 callpeak -t {input} -n {params.output_prefix} --outdir {params.output_dir}"
+        "macs2 callpeak {nomodel_option} -t {input} -n {params.output_prefix} --outdir {params.output_dir}"

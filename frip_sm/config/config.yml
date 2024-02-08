@@ -37,6 +37,9 @@ spikein_params:
     index_spikein: ''
     binsize: 20
 
+macs2_params:
+    no_model: true
+
 output:
     ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps'
     Control_output_path: '/home1/yxiao977/sc1/frip_sm_data/Control_fastqs_maps'
