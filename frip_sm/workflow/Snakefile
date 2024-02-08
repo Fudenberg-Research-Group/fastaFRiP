@@ -48,7 +48,7 @@ if index_spikein != "" and index_spikein != None:
 # Create lists of output filenames
 #############################################
 sample_filenames = glob.glob(chip_fastqs_path+'/*.fastq*')
-pattern = r"\.fastq.*?"
+pattern = r"\.fastq.*"
 samples = [re.sub(pattern, '', s.split('/')[-1]) for s in sample_filenames]
 sam = expand(
         f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.sam",
@@ -119,7 +119,7 @@ if control_fastqs_path == '' :
     ctrl_spikein_sort_bam = []
 else:
     sample_filenames = glob.glob(control_fastqs_path+'/*.fastq*')
-    pattern = r"\.fastq.*?"
+    pattern = r"\.fastq.*"
     samples = [re.sub(pattern, '', s.split('/')[-1]) for s in sample_filenames]
     ctrl_sam = expand(
             f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.sam",
