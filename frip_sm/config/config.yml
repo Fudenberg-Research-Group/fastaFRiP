@@ -20,17 +20,17 @@
 #################################################
 
 input:
-    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/GRCh38_noalt_as/GRCh38_noalt_as' # **/path_to_index_directory/file_prefix
-    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq'
+    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/mm10_only/mm10' # **/path_to_index_directory/file_prefix
+    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/rad21_untreated'
     Control_fastqs: ''
 
 common_params:
-    processes: 6
+    processes: 50
     include_spikein: false
 
 samtools_params:
     quality: 30
-    distance: 100
+    distance: 100 # 100 for HiSeq style platforms or about 2500 for NovaSeq ones
 
 spikein_params:
     index_primary: 'mm10' 
@@ -41,12 +41,14 @@ macs2_params:
     no_model: true
 
 output:
-    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps'
+    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/rad21_untreated'
     Control_output_path: '/home1/yxiao977/sc1/frip_sm_data/Control_fastqs_maps'
 
 
-##############################################################################################
+##########################################################################################################################################
 # Run the pipeline with: 
 #       snakemake --use-conda --cores $Ncores --configfile config/config.yml
-##############################################################################################
+# To calculate Frip use the python script 
+#       python calculate_frip.py --nproc 45 --output-prefix rad21_ctcf --output-directory /home1/yxiao977/sc1/frip_sm_data/frip_result bam bed
+##########################################################################################################################################
    
