@@ -1,11 +1,3 @@
-#########################################
-# THIS IS A TYPICAL config.yml TEMPLATE
-# most of the settings present here
-# are GO for mapping production data
-# but nonetheless user must consider
-# carefully every presented option
-#########################################
-
 ############################################
 # When commmenting parameters out, make sure
 # that each section still has at least one
@@ -13,37 +5,30 @@
 # will not get properly parsed.
 ############################################
 
-
-
-#################################################
-# provide paths to your raw input data (fastq-s):
-#################################################
-
 input:
-    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/mm10_only/mm10' # **/path_to_index_directory/file_prefix
-    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/rad21_untreated'
-    Control_fastqs: ''
+    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/hg38_mm10/hg38_mm10_index' # Pathway to the bowtie index files, e.g.: **/path_to_index_directory/file_prefix
+    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/erika_test_data' # Pathway to the ChIP fastq files
+    Control_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/erika_test_input' # Pathway to the input fastq files
 
 common_params:
-    processes: 50
-    include_spikein: false
+    processes: 50 # Number of cpus will be used 
+    include_spikein: true # Whether the experiment inlcude the 
 
 samtools_params:
-    quality: 30
+    quality: 30 # Quality threshold for filtering bad mapped reads
     distance: 100 # 100 for HiSeq style platforms or about 2500 for NovaSeq ones
 
 spikein_params:
-    index_primary: 'mm10' 
-    index_spikein: ''
-    binsize: 20
+    index_primary: 'mm10' # Name of target species. Leave it blank ('') if spike-in is not included in the experiment
+    index_spikein: 'hg38' # Name of spike-in species. Leave it blank ('') if spike-in is not included in the experiment
+    binsize: 20 # Size of the bins, in bases, for the output of the bigwig/bedgraph file.
 
 macs2_params:
-    no_model: true
+    no_model: true # If true, then MACS2 will bypass building the shifting model
 
 output:
-    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/rad21_untreated'
-    Control_output_path: '/home1/yxiao977/sc1/frip_sm_data/Control_fastqs_maps'
-
+    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/erika_test'
+    Control_output_path: '/home1/yxiao977/sc1/frip_sm_data/Control_fastqs_maps/erika_test'
 
 ##########################################################################################################################################
 # Run the pipeline with: 

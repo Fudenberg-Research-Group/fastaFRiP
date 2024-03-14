@@ -34,7 +34,7 @@ def main():
     frip = float(total_reads_at_peaks[0])/alignment.mapped
 
     filename = options.outdir + "/" + options.prefix + "_frip.txt"
-    file = open(filename,"a")
+    file = open(filename,"w+")
     file.write(options.prefix + "_frip\n")
     file.write(str(frip)+ "\n")
     file.close()

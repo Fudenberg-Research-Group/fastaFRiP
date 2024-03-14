@@ -90,11 +90,20 @@ if include_spikein:
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_spikein}.sort.bam",
             sample_name=samples
         )
-
-    bw = expand(
-            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
+    # bw = expand(
+    #             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
+    #             sample_name=samples
+    #         )
+    if control_fastqs_path == '' :
+        bw = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
             sample_name=samples
         )
+    else:
+        bw = expand(
+                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
+                sample_name=samples
+            )
     peaks_bed = expand(
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort_summits.bed",
             sample_name=samples
