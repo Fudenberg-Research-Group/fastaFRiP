@@ -1,5 +1,5 @@
-
 import glob
+import re
 
 ###############
 # Input
@@ -19,6 +19,12 @@ binsize = config["spikein_params"]["binsize"]
 
 quality = config["samtools_params"]["quality"]
 distance = config["samtools_params"]["distance"]
+
+no_model  = config["macs2_params"]["no_model"]
+if no_model:
+    nomodel_option = "--nomodel"
+else:
+    nomodel_option = ""
 
 ###############
 # Output path
@@ -41,8 +47,11 @@ if index_spikein != "" and index_spikein != None:
 #############################################
 # Create lists of output filenames
 #############################################
-sample_filenames = glob.glob(chip_fastqs_path+'/*.fastq.gz')
-samples = [s.split('/')[-1].replace('.fastq.gz', '') for s in sample_filenames]
+sample_filenames = glob.glob(chip_fastqs_path+'/*.fastq*')
+pattern = r"(_[12])?\.fastq.*"
+samples = [re.sub(pattern, '', s.split('/')[-1]) for s in sample_filenames]
+samples = list(set(samples))
+
 sam = expand(
         f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.sam",
         sample_name=samples
@@ -81,16 +90,36 @@ if include_spikein:
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_spikein}.sort.bam",
             sample_name=samples
         )
-
-    rescale_bw = expand(
-            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
+    # bw = expand(
+    #             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
+    #             sample_name=samples
+    #         )
+    if control_fastqs_path == '' :
+        bw = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
+            sample_name=samples
+        )
+    else:
+        bw = expand(
+                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
+                sample_name=samples
+            )
+    peaks_bed = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort_summits.bed",
             sample_name=samples
         )
 else:
     sam_stats = []
     primary_sort_bam = []
     spikein_sort_bam = []
-    rescale_bw = []
+    bw = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
+            sample_name=samples
+        )
+    peaks_bed = expand(
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.fixed.sort_summits.bed",
+            sample_name=samples
+        )
 
 # Control output files
 if control_fastqs_path == '' :
@@ -103,8 +132,9 @@ if control_fastqs_path == '' :
     ctrl_primary_sort_bam = []
     ctrl_spikein_sort_bam = []
 else:
-    sample_filenames = glob.glob(control_fastqs_path+'/*.fastq.gz')
-    samples = [s.split('/')[-1].replace('.fastq.gz', '') for s in sample_filenames]
+    sample_filenames = glob.glob(control_fastqs_path+'/*.fastq*')
+    pattern = r"(_[12])?\.fastq.*"
+    samples = [re.sub(pattern, '', s.split('/')[-1]) for s in sample_filenames]
     ctrl_sam = expand(
             f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.sam",
             sample_name=samples
@@ -168,20 +198,47 @@ rule all:
         ctrl_primary_sort_bam,
         spikein_sort_bam,
         ctrl_spikein_sort_bam,
-        rescale_bw
+        bw,
+        peaks_bed,
+
+def get_input(wildcards):
+    plain = f"{chip_fastqs_path}/{wildcards.sample}.fastq"
+    gzipped = f"{chip_fastqs_path}/{wildcards.sample}.fastq.gz"
+    paired1 = f"{chip_fastqs_path}/{wildcards.sample}_1.fastq"
+    paired2 = f"{chip_fastqs_path}/{wildcards.sample}_2.fastq"
+
+    if os.path.exists(plain):
+        return plain
+    elif os.path.exists(gzipped):
+        return gzipped
+    elif os.path.exists(paired1):
+        return [paired1, paired2]
+
+    raise FileNotFoundError(f"No input file found for sample {wildcards.sample}, here's the path{gzipped}, {wildcards.sample}")
 
 ##############################
 # Alignment starts here
 ##############################
 rule bowtie2_map:
     input:
-        f"{chip_fastqs_path}/{{sample}}.fastq.gz"
+        files = get_input
     conda:
         "envs/fasta_frip_env.yml"
+    wildcard_constraints:
+        sample = "[a-zA-Z0-9_-]+"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.sam"
     shell:
-        "bowtie2 -p {process} -x {index} -U {input} -S {output}"
+        """
+        files=({input.files})
+        num_files=${{#files[@]}}
+
+        if [ "$num_files" -eq 1 ]; then
+            bowtie2 -p {process} -x {index} -U {input.files} -S {output}
+        elif [ "$num_files" -eq 2 ]; then
+            bowtie2 -p {process} -x {index} -1 {input.files[0]} -2 {input.files[1]}  -S {output}
+        fi
+        """
 
 rule samtools_filter:
     input:
@@ -189,41 +246,61 @@ rule samtools_filter:
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q30.bam")
+        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam")
     shell:
-        "samtools view -h -q {quality} {input} > {output}"
+        "samtools view --threads {process} -h -q {quality} {input} > {output}"
 
 rule samtools_fixmate:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam"
+    params:
+        sorted_name = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.sorted.bam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.bam")
+        temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam")
     shell:
-        "samtools fixmate -m {input} {output}"
+        """
+        samtools sort -n -@{process} {input} -o {params.sorted_name}
+        samtools fixmate -m -r {params.sorted_name} {output}
+        rm {params.sorted_name}
+        """
 
 rule samtools_sort:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     shell:
-        "samtools sort -@{process} {input} -o {output}"
+        """
+        samtools sort -@{process} {input} -o {output}
+        samtools index --threads {process} {output}
+        """
 
 rule samtools_markdup:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.fixed.sort.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     params:
         stats_file_path = f"{{maps}}/{{sample_name}}/{{sample}}.markdup.stats"
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
     shell:
         "samtools markdup -f {params.stats_file_path} -r -d {distance} {input} {output}"
+
+rule bw:
+    input:
+        f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
+    conda:
+        "envs/fasta_frip_env.yml"
+    output:
+        f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.bw"
+    shell:
+        "bamCoverage -b {input} -o {output} -of bigwig --binSize {binsize}"
+
 
 ############################################################
 # The following procedure is for Spike-in ChIP protocol
@@ -231,7 +308,7 @@ rule samtools_markdup:
 # Count the number of reads that map to each genome and print the ratio
 rule spikein_stats:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
@@ -249,43 +326,36 @@ rule spikein_stats:
 # Use grep to create a sam file with only the mm reads
 rule separate_reads:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q30.dedup.sam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
     params:
-        primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_primary}.sam",
-        primary_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_primary}.chr.sam",
-        spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_spikein}.sam",
-        spikein_prefix_chr_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_spikein}.chr.sam"
+        primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sam",
+        spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sam",
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_primary}.sort.bam",
-        output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q30.{index_spikein}.sort.bam"
+        output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam",
+        output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sort.bam"
     shell:
         """
         grep -v '.*{index_spikein}.*' {input} > {params.primary_sam_tmp}
-        sed 's/{index_primary}_chr/chr/' {params.primary_sam_tmp} > {params.primary_prefix_chr_sam_tmp}
+        sed -i 's/{index_primary}_chr/chr/' {params.primary_sam_tmp}
+        samtools sort {params.primary_sam_tmp} -o {output.output1}
         rm {params.primary_sam_tmp}
-        samtools sort {params.primary_prefix_chr_sam_tmp} -o {output.output1}
-        rm {params.primary_prefix_chr_sam_tmp}
-        samtools index {output.output1}
+        samtools index --threads {process} {output.output1}
 
         grep -v '.*{index_primary}.*' {input} > {params.spikein_sam_tmp}
-        sed 's/{index_spikein}_chr/chr/' {params.spikein_sam_tmp} > {params.spikein_prefix_chr_sam_tmp}
+        sed -i 's/{index_spikein}_chr/chr/' {params.spikein_sam_tmp}
+        samtools sort {params.spikein_sam_tmp} -o {output.output2}
         rm {params.spikein_sam_tmp}
-        samtools sort {params.spikein_prefix_chr_sam_tmp} -o {output.output2}
-        rm {params.spikein_prefix_chr_sam_tmp}
-        samtools index {output.output2}
+        samtools index --threads {process} {output.output2}
         """
 
-
-##############################
 # Spike-in Normalization
-##############################
 rule rescaling:
     input:
         ChIP_stats = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.spikein.stats",
         ctrl_stats = f"{Control_result_folder}/{{sample_name}}/{{sample}}.spikein.stats",
-        ChIP_bam = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q30.{index_primary}.sort.bam"
+        ChIP_bam = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
@@ -300,3 +370,19 @@ rule rescaling:
         echo "Scaling_factor=$factor" >> {input.ChIP_stats}
         bamCoverage -b {input.ChIP_bam} -o {output} -of bigwig --binSize {binsize} --scaleFactor $factor
         """
+
+##############################
+# Calling peaks
+##############################
+rule bam_to_bed:
+    input:
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.sort.bam"
+    params:
+        output_prefix = f"{{sample}}.q{quality}.{{type}}.sort", 
+        output_dir = f"{{maps}}/{{sample_name}}/"
+    conda:
+        "envs/fasta_frip_env.yml"
+    output:
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.sort_summits.bed"
+    shell:
+        "macs2 callpeak {nomodel_option} -t {input} -n {params.output_prefix} --outdir {params.output_dir}"
