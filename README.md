@@ -29,6 +29,7 @@ For example:
 ```
 python calculate_frip.py --nproc 3 --output-prefix rad21_ctcf --output-directory /frip_sm_data/frip_result test.bam test.bed
 ```
+To rescale bigwig file based on input(control) sample, the pipeline assume input sample file has the same file name with the corresponding ChIP sample (We will consider to use metadata table to improve this modality)
 
 ## Log
 What: Goal would be to have a Pipeline for calculating FRiP ("fraction of reads in peaks") from fasta (or bed + fasta). 
