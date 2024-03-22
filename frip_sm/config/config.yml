@@ -7,11 +7,11 @@
 
 input:
     bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/mm10_only/mm10' # Pathway to the bowtie index files, e.g.: **/path_to_index_directory/file_prefix
-    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Hansen_2017' # Pathway to the ChIP fastq files
+    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Justice2020' # Pathway to the ChIP fastq files
     Control_fastqs: '' # Pathway to the input fastq files
 
 common_params:
-    processes: 50 # Number of cpus will be used 
+    processes: 10 # Number of cpus will be used 
     include_spikein: false # Whether the experiment inlcude the 
 
 samtools_params:
@@ -27,7 +27,7 @@ macs2_params:
     no_model: true # If true, then MACS2 will bypass building the shifting model
 
 output:
-    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/test'
+    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/Justice2020'
     Control_output_path: ''
 
 ##########################################################################################################################################

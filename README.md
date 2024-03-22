@@ -10,7 +10,7 @@ This is a pipeline for calculating FRiP ("fraction of reads in peaks") from fast
 ## Installation
 ```
 git clone https://github.com/Fudenberg-Research-Group/fastaFRiP.git
-cd frip_sm
+cd fastaFRiP/frip_sm
 ```
 ## Getting Started
 You will need to specifiy where your fastq and bowtie index files located, and choose whether to include spike-in normalization procedure, and specify your output directory path in the configuration file `config.yml` (the explanation of each parameter is included in config.yml)
