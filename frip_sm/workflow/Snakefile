@@ -112,6 +112,8 @@ else:
     sam_stats = []
     primary_sort_bam = []
     spikein_sort_bam = []
+    index_primary = "no_primary"
+    index_spikein = "no_spikein"
     bw = expand(
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
             sample_name=samples
