@@ -11,7 +11,7 @@ input:
     Control_fastqs: '' # Pathway to the input fastq files
 
 common_params:
-    processes: 10 # Number of cpus will be used 
+    processes: 10 # Number of cpus will be used per task. If you set --cores when you run snakemake command line, cores * processes should be <= the number of cpus you have
     include_spikein: false # Whether the experiment inlcude the 
 
 samtools_params:
@@ -34,6 +34,6 @@ output:
 # Run the pipeline with: 
 #       snakemake --use-conda --cores $Ncores --configfile config/config.yml
 # To calculate Frip use the python script 
-#       python calculate_frip.py --nproc 45 --output-prefix rad21_ctcf --output-directory /home1/yxiao977/sc1/frip_sm_data/frip_result bam bed
+#       python calculate_frip.py --nproc 45 pathway/to/metadata/table
 ##########################################################################################################################################
    
