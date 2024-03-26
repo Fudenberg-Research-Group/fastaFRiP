@@ -1,12 +1,13 @@
 import glob
 import re
 import os
+import pandas as pd
 
 ###############
 # Input
 ###############
 chip_fastqs_path = config["input"]["ChIP_fastqs"]
-control_fastqs_path = config["input"]["Control_fastqs"]
+metadata = pd.read_table(config["input"]["metadata"])
 
 ###############
 # Parameters
@@ -30,13 +31,10 @@ else:
 # Output path
 ###############
 ChIP_result_folder = config["output"]["ChIP_output_path"]
-Control_result_folder = config["output"]["Control_output_path"]
 
 # Check if the directory exist. If not, create the directory
-for d in [ChIP_result_folder, Control_result_folder]:
-    if d != '':
-        if not os.path.exists(d):
-            os.makedirs(d)
+if not os.path.exists(ChIP_result_folder):
+    os.makedirs(ChIP_result_folder)
 
 ########################
 # Some condition check
@@ -49,6 +47,11 @@ if index_spikein != "" and index_spikein != None:
     if not include_spikein:
         raise ValueError("Since index_spikein is spcified, <include_spikein> parameter should be set to true")
 
+########################
+# Helper functions
+########################
+def get_control(sample_name):
+    return metadata[metadata.ChIP == samples_name]['Control'].iloc[0]
 
 #############################################
 # Create lists of output filenames
@@ -100,7 +103,7 @@ if include_spikein:
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_spikein}.sort.bam",
             sample_name=samples
         )
-    if control_fastqs_path == '' :
+    if config["input"]["metadata"] == '' :
         bw = expand(
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
             sample_name=samples
@@ -129,103 +132,25 @@ else:
             sample_name=samples
         )
 
-# Control output files
-if control_fastqs_path == '' :
-    ctrl_sam = []
-    ctrl_bam = []
-    ctrl_fixed_bam = []
-    ctrl_fixed_sort_bam = []
-    ctrl_dedup_sam = []
-    ctrl_dedup_bam = []
-    ctrl_sam_stats = []
-    ctrl_primary_sort_bam = []
-    ctrl_spikein_sort_bam = []
-else:
-    sample_filenames = glob.glob(control_fastqs_path+'/*.fastq*')
-    pattern = r"(_[12])?\.fastq.*"
-    samples = [re.sub(pattern, '', s.split('/')[-1]) for s in sample_filenames]
-    ctrl_sam = expand(
-            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.sam",
-            sample_name=samples
-        )
-
-    ctrl_bam = expand(
-            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.bam",
-            sample_name=samples
-        )
-    ctrl_fixed_bam = expand(
-            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.fixed.bam",
-            sample_name=samples
-        )
-
-    ctrl_fixed_sort_bam = expand(
-            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.fixed.sort.bam",
-            sample_name=samples
-        )
-
-    ctrl_dedup_sam = expand(
-            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup.sam",
-            sample_name=samples
-        )
-    ctrl_dedup_bam = expand(
-            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup.bam",
-            sample_name=samples
-        )
-
-    if include_spikein:
-        ctrl_sam_stats = expand(
-                f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.spikein.stats",
-                sample_name=samples
-            )
-
-        ctrl_primary_sort_bam = expand(
-                f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort.bam",
-                sample_name=samples
-            )
-
-        ctrl_spikein_sort_bam = expand(
-                f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_spikein}.sort.bam",
-                sample_name=samples
-            )
-    else:
-        ctrl_sam_stats = []
-        ctrl_primary_sort_bam = []
-        ctrl_spikein_sort_bam = []
-
-
 rule all:
     input:
         sam,
-        ctrl_sam,
         bam,
-        ctrl_bam,
         fixed_bam,
-        ctrl_fixed_bam,
         fixed_sort_bam,
-        ctrl_fixed_sort_bam,
         dedup_sam,
-        ctrl_dedup_sam,
         dedup_bam,
-        ctrl_dedup_bam,
         sam_stats,
-        ctrl_sam_stats,
         primary_sort_bam,
-        ctrl_primary_sort_bam,
         spikein_sort_bam,
-        ctrl_spikein_sort_bam,
         bw,
         peaks_bed,
 
 def get_input(wildcards):
-    if wildcards.maps == ChIP_result_folder:
-        input_path = chip_fastqs_path
-    else:
-        input_path = control_fastqs_path
-
-    plain = f"{input_path}/{wildcards.sample}.fastq"
-    gzipped = f"{input_path}/{wildcards.sample}.fastq.gz"
-    paired1 = f"{input_path}/{wildcards.sample}_1.fastq"
-    paired2 = f"{input_path}/{wildcards.sample}_2.fastq"
+    plain = f"{chip_fastqs_path}/{wildcards.sample}.fastq"
+    gzipped = f"{chip_fastqs_path}/{wildcards.sample}.fastq.gz"
+    paired1 = f"{chip_fastqs_path}/{wildcards.sample}_1.fastq"
+    paired2 = f"{chip_fastqs_path}/{wildcards.sample}_2.fastq"
 
     if os.path.exists(plain):
         return plain
@@ -385,7 +310,7 @@ rule separate_reads:
 rule rescaling:
     input:
         ChIP_stats = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.spikein.stats",
-        ctrl_stats = f"{Control_result_folder}/{{sample_name}}/{{sample}}.spikein.stats",
+        ctrl_stats = lambda wildcards: f"{ChIP_result_folder}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.spikein.stats",
         ChIP_bam = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam"
     conda:
         "envs/fasta_frip_env.yml"
