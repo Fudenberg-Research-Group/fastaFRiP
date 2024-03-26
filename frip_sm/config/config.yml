@@ -7,7 +7,7 @@
 
 input:
     bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/mm10_only/mm10' # Pathway to the bowtie index files, e.g.: **/path_to_index_directory/file_prefix
-    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Justice2020' # Pathway to the ChIP fastq files
+    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Justice_2020' # Pathway to the ChIP fastq files
     Control_fastqs: '' # Pathway to the input fastq files
 
 common_params:
@@ -24,15 +24,15 @@ spikein_params:
     binsize: 20 # Size of the bins, in bases, for the output of the bigwig/bedgraph file.
 
 macs2_params:
-    no_model: true # If true, then MACS2 will bypass building the shifting model
+    broad: false # If true, then MACS2 will call broad peaks
 
 output:
-    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/Justice2020'
+    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/Justice_2020'
     Control_output_path: ''
 
 ##########################################################################################################################################
 # Run the pipeline with: 
-#       snakemake --use-conda --cores $Ncores --configfile config/config.yml
+#       snakemake --use-conda --cores 5 --configfile config/config.yml
 # To calculate Frip use the python script 
 #       python calculate_frip.py --nproc 45 pathway/to/metadata/table
 ##########################################################################################################################################
