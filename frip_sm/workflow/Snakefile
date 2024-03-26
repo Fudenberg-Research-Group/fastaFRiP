@@ -33,7 +33,7 @@ ChIP_result_folder = config["output"]["ChIP_output_path"]
 Control_result_folder = config["output"]["Control_output_path"]
 
 # Check if the directory exist. If not, create the directory
-for d in [ChIP_result_folder, Control_result_folder]
+for d in [ChIP_result_folder, Control_result_folder]:
     if d != '':
         if not os.path.exists(d):
             os.makedirs(d)
@@ -217,10 +217,15 @@ rule all:
         peaks_bed,
 
 def get_input(wildcards):
-    plain = f"{chip_fastqs_path}/{wildcards.sample}.fastq"
-    gzipped = f"{chip_fastqs_path}/{wildcards.sample}.fastq.gz"
-    paired1 = f"{chip_fastqs_path}/{wildcards.sample}_1.fastq"
-    paired2 = f"{chip_fastqs_path}/{wildcards.sample}_2.fastq"
+    if wildcards.maps == ChIP_result_folder:
+        input_path = chip_fastqs_path
+    else:
+        input_path = control_fastqs_path
+
+    plain = f"{input_path}/{wildcards.sample}.fastq"
+    gzipped = f"{input_path}/{wildcards.sample}.fastq.gz"
+    paired1 = f"{input_path}/{wildcards.sample}_1.fastq"
+    paired2 = f"{input_path}/{wildcards.sample}_2.fastq"
 
     if os.path.exists(plain):
         return plain
