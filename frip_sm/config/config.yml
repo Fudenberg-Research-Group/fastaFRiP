@@ -7,11 +7,11 @@
 
 input:
     bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/mm10_only/mm10' # Pathway to the bowtie index files, e.g.: **/path_to_index_directory/file_prefix
-    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Justice_2020' # Pathway to the ChIP fastq files
+    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Hansen_2017' # Pathway to the ChIP fastq files
     Control_fastqs: '' # Pathway to the input fastq files
 
 common_params:
-    processes: 5 # Number of cpus will be used per task. If you set --cores when you run snakemake command line, cores * processes should be <= the number of cpus you have
+    processes: 8 # Number of cpus will be used per task. If you set --cores when you run snakemake command line, cores * processes should be <= the number of cpus you have
     include_spikein: false # Whether the experiment inlcude the 
 
 samtools_params:
@@ -24,10 +24,10 @@ spikein_params:
     binsize: 20 # Size of the bins, in bases, for the output of the bigwig/bedgraph file.
 
 macs2_params:
-    broad: false # If true, then MACS2 will call broad peaks
+    broad: false # If true, then MACS2 will call broad peaks (Narrow peaks are typically associated with transcription factors)
 
 output:
-    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/Justice_2020'
+    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/Hansen_2017'
     Control_output_path: ''
 
 ##########################################################################################################################################

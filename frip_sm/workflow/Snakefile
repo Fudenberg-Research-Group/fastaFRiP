@@ -1,5 +1,6 @@
 import glob
 import re
+import os
 
 ###############
 # Input
@@ -30,6 +31,12 @@ else:
 ###############
 ChIP_result_folder = config["output"]["ChIP_output_path"]
 Control_result_folder = config["output"]["Control_output_path"]
+
+# Check if the directory exist. If not, create the directory
+for d in [ChIP_result_folder, Control_result_folder]
+    if d != '':
+        if not os.path.exists(d):
+            os.makedirs(d)
 
 ########################
 # Some condition check
