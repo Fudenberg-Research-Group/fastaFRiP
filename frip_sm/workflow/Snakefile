@@ -397,7 +397,7 @@ rule bam_to_bed:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.bam"
     params:
-        output_prefix = f"{{sample}}.q{quality}.{{type}}.sort", 
+        output_prefix = f"{{sample}}.q{quality}.{{type}}", 
         output_dir = f"{{maps}}/{{sample_name}}/"
     conda:
         "envs/fasta_frip_env.yml"

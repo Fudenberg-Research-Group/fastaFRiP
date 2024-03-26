@@ -11,7 +11,7 @@ input:
     Control_fastqs: '' # Pathway to the input fastq files
 
 common_params:
-    processes: 10 # Number of cpus will be used per task. If you set --cores when you run snakemake command line, cores * processes should be <= the number of cpus you have
+    processes: 5 # Number of cpus will be used per task. If you set --cores when you run snakemake command line, cores * processes should be <= the number of cpus you have
     include_spikein: false # Whether the experiment inlcude the 
 
 samtools_params:
