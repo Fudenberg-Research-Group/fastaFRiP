@@ -8,7 +8,7 @@
 input:
     bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/mm10_only/mm10' # Pathway to the bowtie index files, e.g.: **/path_to_index_directory/file_prefix
     ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Hansen_2017' # Pathway to the ChIP fastq files
-    Control_fastqs: '' # Pathway to the input fastq files
+    metadata: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Hansen_2017/metadata.txt' # Leave it blank ('') if there is no control samples. Pathway to the metadata.txt that have a table indicates the control sample and the chip sample
 
 common_params:
     processes: 8 # Number of cpus will be used per task. If you set --cores when you run snakemake command line, cores * processes should be <= the number of cpus you have
@@ -28,7 +28,6 @@ macs2_params:
 
 output:
     ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/test'
-    Control_output_path: ''
 
 ##########################################################################################################################################
 # Run the pipeline with: 
