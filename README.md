@@ -43,6 +43,8 @@ python calculate_frip.py --nproc 45 /home1/yxiao977/sc1/frip_sm_data/frip_result
 
 </center>
 
+* If you use this snakemake pipeline to process fastq files, then the BAM files you want to use are with the suffix "q30.dedup.bam", and the BED files you want to use are with the suffix ".q30.dedup_peaks.narrowPeak"
+
 ## Log
 What: Goal would be to have a Pipeline for calculating FRiP ("fraction of reads in peaks") from fasta (or bed + fasta). 
 
