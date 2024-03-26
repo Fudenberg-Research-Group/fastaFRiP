@@ -20,11 +20,10 @@ binsize = config["spikein_params"]["binsize"]
 quality = config["samtools_params"]["quality"]
 distance = config["samtools_params"]["distance"]
 
-no_model  = config["macs2_params"]["no_model"]
-if no_model:
-    nomodel_option = "--nomodel"
+if config["macs2_params"]["broad"]:
+    broad_peaks_option = "--broad"
 else:
-    nomodel_option = ""
+    broad_peaks_option = ""
 
 ###############
 # Output path
@@ -75,6 +74,10 @@ dedup_sam = expand(
         f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup.sam",
         sample_name=samples
     )
+dedup_bam = expand(
+        f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup.bam",
+        sample_name=samples
+    )
 if include_spikein:
     sam_stats = expand(
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.spikein.stats",
@@ -90,10 +93,6 @@ if include_spikein:
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_spikein}.sort.bam",
             sample_name=samples
         )
-    # bw = expand(
-    #             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
-    #             sample_name=samples
-    #         )
     if control_fastqs_path == '' :
         bw = expand(
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
@@ -105,7 +104,7 @@ if include_spikein:
                 sample_name=samples
             )
     peaks_bed = expand(
-            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort_summits.bed",
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort_peaks.narrowPeak",
             sample_name=samples
         )
 else:
@@ -119,7 +118,7 @@ else:
             sample_name=samples
         )
     peaks_bed = expand(
-            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.fixed.sort_summits.bed",
+            f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup_peaks.narrowPeak",
             sample_name=samples
         )
 
@@ -130,6 +129,7 @@ if control_fastqs_path == '' :
     ctrl_fixed_bam = []
     ctrl_fixed_sort_bam = []
     ctrl_dedup_sam = []
+    ctrl_dedup_bam = []
     ctrl_sam_stats = []
     ctrl_primary_sort_bam = []
     ctrl_spikein_sort_bam = []
@@ -158,6 +158,10 @@ else:
 
     ctrl_dedup_sam = expand(
             f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup.sam",
+            sample_name=samples
+        )
+    ctrl_dedup_bam = expand(
+            f"{Control_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup.bam",
             sample_name=samples
         )
 
@@ -194,6 +198,8 @@ rule all:
         ctrl_fixed_sort_bam,
         dedup_sam,
         ctrl_dedup_sam,
+        dedup_bam,
+        ctrl_dedup_bam,
         sam_stats,
         ctrl_sam_stats,
         primary_sort_bam,
@@ -221,6 +227,7 @@ def get_input(wildcards):
 ##############################
 # Alignment starts here
 ##############################
+# alignment
 rule bowtie2_map:
     input:
         files = get_input
@@ -242,6 +249,7 @@ rule bowtie2_map:
         fi
         """
 
+# skip alignments with MAPQ smaller than INT {quality}
 rule samtools_filter:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.sam"
@@ -252,6 +260,7 @@ rule samtools_filter:
     shell:
         "samtools view --threads {process} -h -q {quality} {input} > {output}"
 
+# sort by reads name and then correctly remove secondary and unmapped reads
 rule samtools_fixmate:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam"
@@ -268,6 +277,7 @@ rule samtools_fixmate:
         rm {params.sorted_name}
         """
 
+# back to sorting by genomic coordinates for markdup
 rule samtools_sort:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam"
@@ -281,6 +291,7 @@ rule samtools_sort:
         samtools index --threads {process} {output}
         """
 
+# remove duplicate reads
 rule samtools_markdup:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
@@ -289,13 +300,19 @@ rule samtools_markdup:
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
+        sam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam",
+        bam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.bam"
     shell:
-        "samtools markdup -f {params.stats_file_path} -r -d {distance} {input} {output}"
+        """
+        samtools markdup -f {params.stats_file_path} -r -d {distance} {input} {output.sam}
+        samtools view --threads {process} -Sb {output.sam} > {output.bam}
+        samtools index --threads {process} {output.bam}
+        """
 
+# create an unscaled bigwig file
 rule bw:
     input:
-        f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
+        f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q{quality}.dedup.bam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
@@ -378,13 +395,13 @@ rule rescaling:
 ##############################
 rule bam_to_bed:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.sort.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.bam"
     params:
         output_prefix = f"{{sample}}.q{quality}.{{type}}.sort", 
         output_dir = f"{{maps}}/{{sample_name}}/"
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.sort_summits.bed"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}_peaks.narrowPeak"
     shell:
-        "macs2 callpeak {nomodel_option} -t {input} -n {params.output_prefix} --outdir {params.output_dir}"
+        "macs2 callpeak {broad_peaks_option} -t {input} -n {params.output_prefix} --outdir {params.output_dir}"
