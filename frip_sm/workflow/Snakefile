@@ -7,7 +7,8 @@ import pandas as pd
 # Input
 ###############
 chip_fastqs_path = config["input"]["ChIP_fastqs"]
-metadata = pd.read_table(config["input"]["metadata"])
+if config["input"]["metadata"] != '':
+    metadata = pd.read_table(config["input"]["metadata"])
 
 ###############
 # Parameters
@@ -46,12 +47,6 @@ if include_spikein:
 if index_spikein != "" and index_spikein != None:
     if not include_spikein:
         raise ValueError("Since index_spikein is spcified, <include_spikein> parameter should be set to true")
-
-########################
-# Helper functions
-########################
-def get_control(sample_name):
-    return metadata[metadata.ChIP == samples_name]['Control'].iloc[0]
 
 #############################################
 # Create lists of output filenames
@@ -108,10 +103,17 @@ if include_spikein:
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
             sample_name=samples
         )
+        bw_ctrl = []
     else:
+        need_rescale = [s for s in samples if s in metadata['ChIP'].unique()]
+        no_rescale = [s for s in samples if s not in metadata['ChIP'].unique()]
         bw = expand(
                 f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
-                sample_name=samples
+                sample_name=need_rescale
+            )
+        bw_ctrl = expand(
+                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
+                sample_name=no_rescale
             )
     peaks_bed = expand(
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort_peaks.narrowPeak",
@@ -121,6 +123,7 @@ else:
     sam_stats = []
     primary_sort_bam = []
     spikein_sort_bam = []
+    bw_ctrl = []
     index_primary = "no_primary"
     index_spikein = "no_spikein"
     bw = expand(
@@ -144,7 +147,14 @@ rule all:
         primary_sort_bam,
         spikein_sort_bam,
         bw,
+        bw_ctrl,
         peaks_bed,
+
+########################
+# Helper functions
+########################
+def get_control(sample_name):
+    return metadata[metadata.ChIP == sample_name]['Control'].iloc[0]
 
 def get_input(wildcards):
     plain = f"{chip_fastqs_path}/{wildcards.sample}.fastq"
@@ -192,6 +202,8 @@ rule samtools_filter:
         f"{{maps}}/{{sample_name}}/{{sample}}.sam"
     conda:
         "envs/fasta_frip_env.yml"
+    wildcard_constraints:
+        sample="[^.]+"
     output:
         temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam")
     shell:
@@ -205,6 +217,8 @@ rule samtools_fixmate:
         sorted_name = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.sorted.bam"
     conda:
         "envs/fasta_frip_env.yml"
+    wildcard_constraints:
+        sample="[^.]+"
     output:
         temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam")
     shell:
@@ -220,6 +234,8 @@ rule samtools_sort:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam"
     conda:
         "envs/fasta_frip_env.yml"
+    wildcard_constraints:
+        sample="[^.]+"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     shell:
@@ -236,6 +252,8 @@ rule samtools_markdup:
         stats_file_path = f"{{maps}}/{{sample_name}}/{{sample}}.markdup.stats"
     conda:
         "envs/fasta_frip_env.yml"
+    wildcard_constraints:
+        sample="[^.]+"
     output:
         sam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam",
         bam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.bam"
@@ -249,11 +267,13 @@ rule samtools_markdup:
 # create an unscaled bigwig file
 rule bw:
     input:
-        f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q{quality}.dedup.bam"
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.bam"
     conda:
         "envs/fasta_frip_env.yml"
+    wildcard_constraints:
+        sample="[^.]+"
     output:
-        f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.bw"
+        f"{{maps}}/{{sample_name}}/{{sample}}.bw"
     shell:
         "bamCoverage -b {input} -o {output} -of bigwig --binSize {binsize}"
 
@@ -279,7 +299,7 @@ rule spikein_stats:
         echo "scale=2; $primary_reads/$spikein_reads" | bc >> {output} 
         """
 
-# Use grep to create a sam file with only the mm reads
+# Use grep to create a sam file with only one species reads
 rule separate_reads:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
@@ -309,13 +329,13 @@ rule separate_reads:
 # Spike-in Normalization
 rule rescaling:
     input:
-        ChIP_stats = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.spikein.stats",
-        ctrl_stats = lambda wildcards: f"{ChIP_result_folder}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.spikein.stats",
-        ChIP_bam = f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam"
+        ChIP_stats = f"{{maps}}/{{sample_name}}/{{sample}}.spikein.stats",
+        ctrl_stats = lambda wildcards: f"{wildcards.maps}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.spikein.stats",
+        ChIP_bam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam"
     conda:
         "envs/fasta_frip_env.yml"
     output:
-        f"{ChIP_result_folder}/{{sample_name}}/{{sample}}.rescale.bw"
+        f"{{maps}}/{{sample_name}}/{{sample}}.rescale.bw"
     shell:
         """
         primary_reads=$(awk -F'=' '/{index_primary}_reads/{{print $2}}' {input.ChIP_stats}) 
