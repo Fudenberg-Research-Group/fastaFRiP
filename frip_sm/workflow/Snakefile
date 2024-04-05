@@ -104,21 +104,32 @@ if include_spikein:
             sample_name=samples
         )
         bw_ctrl = []
-    else:
-        need_rescale = [s for s in samples if s in metadata['ChIP'].unique()]
-        no_rescale = [s for s in samples if s not in metadata['ChIP'].unique()]
-        bw = expand(
-                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
-                sample_name=need_rescale
-            )
-        bw_ctrl = expand(
-                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
-                sample_name=no_rescale
-            )
-    peaks_bed = expand(
+
+        peaks_bed = expand(
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort_peaks.narrowPeak",
             sample_name=samples
         )
+        peaks_bed_wi = []
+
+    else:
+        have_input = [s for s in samples if s in metadata['ChIP'].unique()]
+        no_input = [s for s in samples if s not in metadata['ChIP'].unique()]
+        bw = expand(
+                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.rescale.bw",
+                sample_name=have_input
+            )
+        bw_ctrl = expand(
+                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
+                sample_name=no_input
+            )
+        peaks_bed = expand(
+                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort_peaks.narrowPeak",
+                sample_name=no_input
+            )
+        peaks_bed_wi = expand(
+                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.{index_primary}.sort.withinput_peaks.narrowPeak",
+                sample_name=have_input
+            )
 else:
     sam_stats = []
     primary_sort_bam = []
@@ -130,10 +141,24 @@ else:
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.bw",
             sample_name=samples
         )
-    peaks_bed = expand(
+    if config["input"]["metadata"] == '' :
+        peaks_bed = expand(
             f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup_peaks.narrowPeak",
             sample_name=samples
         )
+        peaks_bed_wi = []
+
+    else:
+        have_input = [s for s in samples if s in metadata['ChIP'].unique()]
+        no_input = [s for s in samples if s not in metadata['ChIP'].unique()]
+        peaks_bed = expand(
+                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup_peaks.narrowPeak",
+                sample_name=no_input
+            )
+        peaks_bed_wi = expand(
+                f"{ChIP_result_folder}/{{sample_name}}/{{sample_name}}.q{quality}.dedup.withinput_peaks.narrowPeak",
+                sample_name=have_input
+            )
 
 rule all:
     input:
@@ -149,12 +174,13 @@ rule all:
         bw,
         bw_ctrl,
         peaks_bed,
+        peaks_bed_wi,
 
 ########################
 # Helper functions
 ########################
 def get_control(sample_name):
-    return metadata[metadata.ChIP == sample_name]['Control'].iloc[0]
+    return metadata[metadata.ChIP == sample_name]['Input'].iloc[0]
 
 def get_input(wildcards):
     plain = f"{chip_fastqs_path}/{wildcards.sample}.fastq"
@@ -362,3 +388,17 @@ rule bam_to_bed:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}_peaks.narrowPeak"
     shell:
         "macs2 callpeak {broad_peaks_option} -t {input} -n {params.output_prefix} --outdir {params.output_dir}"
+
+rule bam_to_bed_wi:
+    input:
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.bam"
+    params:
+        output_prefix = f"{{sample}}.q{quality}.{{type}}.withinput", 
+        output_dir = f"{{maps}}/{{sample_name}}/",
+        ctrl_file = lambda wildcards: f"{wildcards.maps}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.q{quality}.{wildcards.type}.bam",
+    conda:
+        "envs/fasta_frip_env.yml"
+    output:
+        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.withinput_peaks.narrowPeak"
+    shell:
+        "macs2 callpeak {broad_peaks_option} -t {input} -c {params.ctrl_file} -n {params.output_prefix} --outdir {params.output_dir}"

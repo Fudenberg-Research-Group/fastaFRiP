@@ -27,7 +27,7 @@ macs2_params:
     broad: false # If true, then MACS2 will call broad peaks (Narrow peaks are typically associated with transcription factors)
 
 output:
-    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/test'
+    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/test' # Pathway to the output directory
 
 ##########################################################################################################################################
 # Run the pipeline with: 
