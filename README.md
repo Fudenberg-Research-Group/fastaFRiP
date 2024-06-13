@@ -21,7 +21,7 @@ To quickly access the 'accession codes' of chip-seq experiments, we can use:
 folder_name % grep "ChIP" SraRunTable.txt | awk -F, '{print $1}' > accession.txt
 ```
 This command download codes of each file, which can be later used to download necessary data from ...
-We have provided a .bash file to download the data 'batch_download.sh'. However, to run this file, one more step is required to download 'fasterq-dump':
+We have provided a .bash file to download the data 'batch_download.sh'. However, to run this file, one more step is required to install 'fasterq-dump' in the working conda environment:
 ```
 conda install -c bioconda sra-tools
 ```
