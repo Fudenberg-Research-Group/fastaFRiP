@@ -25,7 +25,7 @@ We have provided a .bash file to download the data 'batch_download.sh'. However,
 ```
 conda install -c bioconda sra-tools
 ```
-
+### running the pipeline
 You will need to specifiy where your fastq and bowtie index files located, and choose whether to include spike-in normalization procedure, and specify your output directory path in the configuration file `config.yml` (the explanation of each parameter is included in config.yml)
 
 * Tips: To rescale bigwig file and call peaks based on input(control) sample, the pipeline will require a metadata table (stored in .txt file) have the two columns as the below example (column names must be the same as the example), and the sample name should be fetched from the fastq files (e.g. SRR5085155.fastq), and if a sample does not have input, you don't include it in the table:
