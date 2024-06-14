@@ -49,7 +49,8 @@ Once you set up configuration file, you can run the below command line in the te
 ```
 snakemake --use-conda --cores $Ncores --configfile config/config.yml
 ```
-* Tips: [Number of cores] * [number of process in config.yml] <= the total number of cpus you have
+* Make sure there are available computing resource
+  Tips: [Number of cores] * [number of process in config.yml] <= the total number of cpus you have
 
 After you generate bam files and bed files with the above command line, you can use `calculate_frip.py` to calculate FRiP value.
 ```
