@@ -26,6 +26,11 @@ We have provided a script, batch_download.sh, to facilitate the data download. H
 ```
 conda install -c bioconda sra-tools
 ```
+And finally running the script:
+```
+./batch_download.sh
+```
+
 ### running the pipeline
 You will need to specifiy where your fastq and bowtie index files located, and choose whether to include spike-in normalization procedure, and specify your output directory path in the configuration file `config.yml` (the explanation of each parameter is included in config.yml)
 
