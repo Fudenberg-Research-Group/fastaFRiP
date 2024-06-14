@@ -34,7 +34,8 @@ And finally running the script:
 ### running the pipeline
 
 #### files specification
-You will need to specifiy where your input (fastq and bowtie index files located) and output files, and choose whether to include spike-in normalization procedure in the configuration file `config.yml` (the explanation of each parameter is included in config.yml).
+You will need to specifiy where your input (fastq and bowtie index files located) and output files, and choose whether to include spike-in normalization procedure in the configuration file `config.yml` (the explanation of each parameter is included in config.yml). 
+In case the experimetn includes spikenning, the 'include_spikein' should be set to 'true', and the 'index_primary' and 'index_spikein' should be set according to the experiment. 
 
 * Tips: To rescale bigwig file and call peaks based on input(control) sample, the pipeline will require a metadata table (stored in .txt file) have the two columns as the below example (column names must be the same as the example), and the sample name should be fetched from the fastq files (e.g. SRR5085155.fastq), and if a sample does not have input, you don't include it in the table:
 
