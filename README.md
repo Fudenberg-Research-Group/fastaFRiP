@@ -44,15 +44,17 @@ You will need to specifiy where your fastq and bowtie index files located, and c
 | SRR5085157 | SRR5085158 |
 </center>
 
-#### generating bim/bed files
+#### generating bam/bed files
 
-Once you set up configuration file, you can run the below command line in the terminal to generate required bim/bed files:
+Once you set up configuration file, you can run the below command line in the terminal to generate required bam/bed files:
 
 ```
 snakemake --use-conda --cores $Ncores --configfile config/config.yml
 ```
-* Make sure there are available computing resource\
+You need to make sure there are available computing resource\
   Tips: [Number of cores] * [number of process in config.yml] <= the total number of cpus you have
+
+#### calculating FRiP
 
 After you generate bam files and bed files with the above command line, you can use `calculate_frip.py` to calculate FRiP value.
 ```
