@@ -60,7 +60,8 @@ After you generate bam files and bed files with the above command line, you can 
 ```
 python calculate_frip.py --nproc [number of cpus] [pathway to the metadata table]
 ```
-For example:
+
+Example:
 ```
 python calculate_frip.py --nproc 45 /home1/yxiao977/sc1/frip_sm_data/frip_result/Hansen2017/metadata.txt
 ```
