@@ -53,7 +53,7 @@ Once you set up configuration file, you can run the below command line in the te
 ```
 snakemake --use-conda --cores $Ncores --configfile config/config.yml
 ```
-You need to make sure there are available computing resource\
+Please note that you need to make sure there are available computing resource\
   Tips: [Number of cores] * [number of process in config.yml] <= the total number of cpus you have
 
 #### calculating FRiP
