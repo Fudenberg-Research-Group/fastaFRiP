@@ -42,6 +42,7 @@ If the experiment includes spike-in, set include_spikein to true, and set index_
 
 #### Metadata Table for Peak Calling:
 To rescale the bigwig file and call peaks based on an input (control) sample, the pipeline requires a metadata table with two columns: ChIP and Input. The sample names should match those in the FASTQ files (e.g., SRR5085155.fastq). If a sample does not have input, exclude it from the table.
+A python script for generating such a table is provided here, create_frip_table.py.
 
 <center>
 
