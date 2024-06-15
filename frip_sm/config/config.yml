@@ -6,28 +6,28 @@
 ############################################
 
 input:
-    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/mm10_only/mm10' # Pathway to the bowtie index files, e.g.: **/path_to_index_directory/file_prefix
-    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Hansen_2017' # Pathway to the ChIP fastq files
-    metadata: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Hansen_2017/metadata.txt' # Leave it blank ('') if there is no control samples. Pathway to the metadata.txt that have a table indicates the control sample and the chip sample
+    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/hg38_mm10/hg38_mm10_index' # Pathway to the bowtie index files, e.g.: **/path_to_index_directory/file_prefix
+    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Liu_2020' # Pathway to the ChIP fastq files
+    metadata: '' # Leave it blank ('') if there is no input(control) samples. Pathway to the metadata.txt that have a table indicates the input(control) sample and the ChIP sample
 
 common_params:
-    processes: 8 # Number of cpus will be used per task. If you set --cores when you run snakemake command line, cores * processes should be <= the number of cpus you have
-    include_spikein: true # Whether the experiment inlcude the 
+    processes: 5 # Number of cpus will be used per task. If you set --cores when you run snakemake command line, cores * processes should be <= the number of cpus you have
+    include_spikein: false # Whether the experiment inlcude the 
 
 samtools_params:
     quality: 30 # Quality threshold for filtering bad mapped reads
     distance: 100 # 100 for HiSeq style platforms or about 2500 for NovaSeq ones
 
 spikein_params:
-    index_primary: 'mm10' # Name of target species. Leave it blank ('') if spike-in is not included in the experiment
-    index_spikein: 'hg38' # Name of spike-in species. Leave it blank ('') if spike-in is not included in the experiment
+    index_primary: '' # Name of target species. Leave it blank ('') if spike-in is not included in the experiment
+    index_spikein: '' # Name of spike-in species. Leave it blank ('') if spike-in is not included in the experiment
     binsize: 20 # Size of the bins, in bases, for the output of the bigwig/bedgraph file.
 
 macs2_params:
     broad: false # If true, then MACS2 will call broad peaks (Narrow peaks are typically associated with transcription factors)
 
 output:
-    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/test' # Pathway to the output directory
+    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/Liu_2020' # Pathway to the output directory
 
 ##########################################################################################################################################
 # Run the pipeline with: 

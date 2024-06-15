@@ -13,6 +13,7 @@ git clone https://github.com/Fudenberg-Research-Group/fastaFRiP.git
 cd fastaFRiP/frip_sm
 ```
 ## Getting Started
+
 You will need to specifiy where your fastq and bowtie index files located, and choose whether to include spike-in normalization procedure, and specify your output directory path in the configuration file `config.yml` (the explanation of each parameter is included in config.yml)
 
 * Tips: To rescale bigwig file and call peaks based on input(control) sample, the pipeline will require a metadata table (stored in .txt file) have the two columns as the below example (column names must be the same as the example), and the sample name should be fetched from the fastq files (e.g. SRR5085155.fastq), and if a sample does not have input, you don't include it in the table:
@@ -32,7 +33,27 @@ snakemake --use-conda --cores $Ncores --configfile config/config.yml
 ```
 * Tips: [Number of cores] * [number of process in config.yml] <= the total number of cpus you have
 
-After you generate bam files and bed files with the above command line, you can use `calculate_frip.py` to calculate FRiP value.
+### Create FRiP table
+After you generate bam files and bed files with the above command line, you can first use `fetch_metadata.py` to create a metadata table. Example metadata table:
+<center>
+
+| SRUN       | Experiment                | GSM_accession | Treatment  | Antibody | Celltype | Organism    | Peak BED | author_year   | GEO       |
+|------------|---------------------------|---------------|------------|----------|----------|-------------|----------|---------------|-----------|
+| SRR5266522 | Hap1 IgG ChIPseq          | GSM2493874    | WT         | IgG      | Hap1     | Homo sapiens| CTCF     | Haarhuis_2017 | GSE90994  |
+| SRR5266523 | WaplKO_3.3 IgG ChIPseq    | GSM2493875    | WaplKO_3.3 | IgG      | Hap1     | Homo sapiens| CTCF     | Haarhuis_2017 | GSE90994  |
+</center>
+
+And then you can use `create_frip_table.py` to create a FRiP table. Example FRiP table:
+<center>
+
+| FRiP              | Organism      | Celltype | Treatment | Antibody | Peak BED | author_year   | SRUN       | peaks-SRA   | GEO       | Experiment              | FRiP enrichment | #Peaks | Total #basepairs in peaks | Total #reads |
+|-------------------|---------------|----------|-----------|----------|----------|---------------|------------|-------------|-----------|-------------------------|-----------------|--------|----------------------------|--------------|
+| 0.11113138926362592 | Homo sapiens | Hap1     | SCC4KO    | CTCF     | CTCF     | Haarhuis_2017 | SRR5266528 | SRR5266528  | GSE90994  | SCC4KO CTCF ChIPseq     | 27.17470160067354 | 37415  | 12677501                   | 19977713     |
+| 0.00698026098917694 | Homo sapiens | Hap1     | SCC4KO    | IgG      | CTCF     | Haarhuis_2017 | SRR5266524 | SRR5266528  | GSE90994  | SCC4KO IgG ChIPseq      | 1.7068670762832925 | 37415  | 12677501                   | 14485275     |
+</center>
+
+### Only calculating FRiP value
+you can use `calculate_frip.py` to calculate FRiP value.
 ```
 python calculate_frip.py --nproc [number of cpus] [pathway to the metadata table]
 ```
@@ -71,3 +92,4 @@ Some design questions:
 Some todos (list can expand):
 - [ ] files to specify requirements & environment needed
 - [ ] options for pipeline to run on regular ChIP or spike-in ChIP data
+       
