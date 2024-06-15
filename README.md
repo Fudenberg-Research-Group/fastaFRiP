@@ -13,6 +13,7 @@ git clone https://github.com/Fudenberg-Research-Group/fastaFRiP.git
 cd fastaFRiP/frip_sm
 ```
 ## Getting Started
+
 You will need to specifiy where your fastq and bowtie index files located, and choose whether to include spike-in normalization procedure, and specify your output directory path in the configuration file `config.yml` (the explanation of each parameter is included in config.yml)
 
 * Tips: To rescale bigwig file and call peaks based on input(control) sample, the pipeline will require a metadata table (stored in .txt file) have the two columns as the below example (column names must be the same as the example), and the sample name should be fetched from the fastq files (e.g. SRR5085155.fastq), and if a sample does not have input, you don't include it in the table:
@@ -90,4 +91,5 @@ Some design questions:
 
 Some todos (list can expand):
 - [ ] files to specify requirements & environment needed
-- [ ] options for pipeline to run on regular ChIP or spike-in ChIP data       
+- [ ] options for pipeline to run on regular ChIP or spike-in ChIP data
+       
