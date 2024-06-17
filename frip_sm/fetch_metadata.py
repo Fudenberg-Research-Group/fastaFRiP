@@ -16,6 +16,8 @@ treatment_attribute_name = 'genotype/variation'
 antibody_attribute_name = 'antibody'
 celltype_attribute_name = 'cell line'
 organism_attribute_name = 'organism'
+
+output_path = f'/home1/yxiao977/sc1/frip_sm_data/frip_result/{dataset}/metadata.txt'
 ########################################################################
 
 accessions = np.loadtxt(path_to_accessions, dtype='str')
@@ -33,6 +35,12 @@ def fetch_metadata(accession):
 experi_infos = []
 gsm = []
 for i, a in enumerate(accessions):
+    # while True:
+    #     try:
+    #         data = fetch_metadata(a)
+    #     except SomeSpecificException:
+    #         continue
+    #     break
     data = fetch_metadata(a)
     title = data[a]['title'].split(';')
     experi_info = title[1].split(':')
@@ -82,4 +90,4 @@ cols = ['Organism',
  'GEO',
  'Experiment']
 
-df[cols].to_csv(f'/home1/yxiao977/sc1/frip_sm_data/frip_result/{dataset}/metadata.txt', sep='\t', index=False)
+df[cols].to_csv(output_path, sep='\t', index=False)
