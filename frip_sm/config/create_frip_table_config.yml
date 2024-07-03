@@ -1,0 +1,21 @@
+dataset : "Haarhuis_2017"
+species : "human"
+path_to_metadata : (
+    f"/home1/yxiao977/sc1/frip_sm_data/frip_result/{dataset}/metadata.txt"
+)
+path_to_data : f"/scratch1/yxiao977/frip_sm_data/ChIP_fastqs_maps/{dataset}"
+
+nproc = 49
+
+peak_protein_sra : "SRR5266528"  # SRUN of Peak Protein
+condition : "SCC4KO"
+peak_protein : "CTCF"
+genome_size : 3.1 * 10**9
+path_to_bed : ""
+
+df : pd.read_table(path_to_metadata)
+samples : df[
+    df["Condition"].str.contains(condition)
+    & ~(df["Antibody"].str.contains(peak_protein))
+].reset_index(drop:True)
+output_path : f"/scratch1/yxiao977/frip_sm_data/frip_result/{dataset}/{condition}_{peak_protein}({peak_protein_sra})_frips.txt"
