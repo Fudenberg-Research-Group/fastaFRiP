@@ -6,6 +6,7 @@ This is a pipeline for calculating FRiP ("fraction of reads in peaks") from fast
 ## Prerequisites
 - python
 - Snakemake
+- ffq
 
 ## Installation
 ```
