@@ -29,7 +29,7 @@ We have provided a script, batch_download.sh, to facilitate the data download. H
 ```
 conda install -c bioconda sra-tools
 ```
-Finally, run the script:
+Finally, run the script by having the 'accession.txt' in the same folder:
 ```
 ./batch_download.sh
 ```
