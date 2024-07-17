@@ -1,5 +1,4 @@
 parameters:
-    dataset: "Haarhuis_2017"
     species: "hg38"
     condition: "SCC4KO"
     peak_protein: "CTCF"

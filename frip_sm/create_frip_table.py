@@ -9,7 +9,6 @@ with open("config/create_frip_table_config.yml", "r") as f:
 GENOME_SIZE = {"hg38": 3.1 * 10**9, "mm10": 2.7 * 10**9}
 
 ######## Read parameters from config file##############################################
-dataset = config["parameters"]["dataset"]
 species = config["parameters"]["species"]
 condition = config["parameters"]["condition"]
 peak_protein = config["parameters"]["peak_protein"]
