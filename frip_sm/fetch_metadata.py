@@ -1,55 +1,31 @@
-import subprocess
-import json
 import numpy as np
 import pandas as pd
 import yaml
+from utils import fetch_metadata
 
-with open('config/fetch_metadata_config.yml', 'r') as f:
+with open("config/fetch_metadata_config.yml", "r") as f:
     config = yaml.safe_load(f)
 
 ######## Parameters ####################################################
-dataset = "Haarhuis_2017"
-geo_accession = "GSE90994"
-path_to_accessions = (
-    f"/home1/yxiao977/sc1/frip_sm_data/download_fastq/{dataset}/accessions.txt"
-)
-
-# you need to check if the author upload antibody attribute
-contain_antibody_attribute = True
-
-# you need to check how the author names these attributes
-condition_key = "genotype/variation"
-antibody_key = "antibody"
-celltype_key = "cell line"
-organism_key = "organism"
-
-output_path = f"/home1/yxiao977/sc1/frip_sm_data/frip_result/{dataset}/metadata.txt"
+dataset = config["parameters"]["dataset"]
+geo_accession = config["parameters"]["geo_accession"]
+path_to_accessions = config["input"]["path_to_accessions"]
+output_path = config["output"]["output_path"]
 ########################################################################
 
 accessions = np.loadtxt(path_to_accessions, dtype="str")
-
-
-def fetch_metadata(accession):
-    # Use subprocess to run ffq and capture the output
-    result = subprocess.run(["ffq", accession], capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"Error fetching data for {accession}: {result.stderr}")
-        return None
-    return json.loads(result.stdout)
-
 
 ### fetch title from SRUN accession
 experi_infos = []
 gsm = []
 for i, a in enumerate(accessions):
-    # while True:
-    #     try:
-    #         data = fetch_metadata(a)
-    #     except SomeSpecificException:
-    #         continue
-    #     break
-    data = fetch_metadata(a)
-    title = data[a]["title"].split(";")
+    while True:
+        try:
+            data = fetch_metadata(a)
+            title = data[a]["title"].split(";")
+        except TypeError:
+            continue
+        break
     experi_info = title[1].split(":")
     gsm.append(experi_info[0])
     experi_infos.append(experi_info[1])
@@ -65,18 +41,34 @@ antibody = []
 celltype = []
 organism = []
 
-# for data has complete attributes
+KEY_WORDS = ["gen", "cell", "organism"]
+attribute_keys = []
 for i, row in df.iterrows():
     a = row["GSM_accession"].replace(" ", "")
     data = fetch_metadata(a)
     attributes = data[a]["samples"][list(data[a]["samples"].keys())[0]]["attributes"]
-    condition.append(attributes[condition_key])
-    if contain_antibody_attribute:
+
+    if len(attribute_keys) == 0:
+        key_df = pd.DataFrame({"Keys": attributes.keys()})
+        for kw in KEY_WORDS:
+            try:
+                attribute_keys.append(
+                    key_df[key_df["Keys"].str.contains(kw, case=False)].iloc[0, 0]
+                )
+            except IndexError:
+                print(f"There is no attributes match with the substring {kw}")
+
+    condition.append(attributes[attribute_keys[0]])
+    celltype.append(attributes[attribute_keys[1]])
+    organism.append(attributes[attribute_keys[2]])
+
+    try:
+        antibody_key = key_df[key_df["Keys"].str.contains("anti", case=False)].iloc[
+            0, 0
+        ]
         antibody.append(attributes[antibody_key])
-    else:
+    except IndexError:
         antibody.append(row["Experiment"].split("_")[-1])
-    celltype.append(attributes[celltype_key])
-    organism.append(attributes[organism_key])
     print(a, "done")
 
 df["Condition"] = condition

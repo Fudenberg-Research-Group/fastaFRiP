@@ -1,12 +1,14 @@
-dataset: "Haarhuis_2017"
-species: "human"
-path_to_metadata: (
-    f"/home1/yxiao977/sc1/frip_sm_data/frip_result/{dataset}/metadata.txt"
-)
-path_to_data: f"/scratch1/yxiao977/frip_sm_data/ChIP_fastqs_maps/{dataset}"
-nproc: 49
-condition: "SCC4KO"
-peak_protein: "CTCF"
-genome_size: 3.1 * 10**9
-path_to_bed: ""
-output_path: f"/scratch1/yxiao977/frip_sm_data/frip_result/{dataset}/{condition}_{peak_protein}({peak_protein_sra})_frips.txt"
+parameters:
+    dataset: "Haarhuis_2017"
+    species: "hg38"
+    condition: "SCC4KO"
+    peak_protein: "CTCF"
+    nproc: 49
+
+input:
+    path_to_metadata: "/home1/yxiao977/proj/frip_sm_data/frip_result/Haarhuis_2017/metadata.txt"
+    path_to_data: "/home1/yxiao977/proj/frip_sm_data/ChIP_fastqs_maps/Haarhuis_2017/"
+    path_to_bed: ""
+
+output:
+    output_directory: f"/scratch1/yxiao977/test_frip_sm_data/frip_result/Haarhuis_2017/"

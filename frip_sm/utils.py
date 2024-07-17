@@ -1,9 +1,24 @@
 import pysam
 import pandas as pd
+import os
+import subprocess
+import json
+import bioframe as bf
 import deeptools.countReadsPerBin as crpb
+
 pysam.set_verbosity(0)
 
+
 # Helper function
+def fetch_metadata(accession):
+    # Use subprocess to run ffq and capture the output
+    result = subprocess.run(["ffq", accession], capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Error fetching data for {accession}: {result.stderr}")
+        return None
+    return json.loads(result.stdout)
+
+
 def calculate_frip(bam, bed, nproc=40):
     alignment = pysam.AlignmentFile(bam)
     reads_counter = crpb.CountReadsPerBin([bam], bedFile=bed, numberOfProcessors=nproc)
@@ -14,20 +29,33 @@ def calculate_frip(bam, bed, nproc=40):
 
     return frip, reads_at_peaks, total_reads
 
-def create_frip_table_from_bed(samples_metadata, path_to_bed, path_to_data, genome_size, nproc, peak_protein_srun=""):
+
+def create_frip_table_from_bed(
+    samples_metadata,
+    path_to_bed,
+    path_to_data,
+    genome_size,
+    species,
+    nproc,
+    peak_protein_srun="",
+):
     sruns = samples_metadata["SRUN"].to_list()
 
-    peaks = pd.read_table(path_to_bed, header=None).iloc[:, :3]
-    peaks.columns = ["chrom", "start", "end"]
+    peaks = bf.read_table(path_to_bed, schema="bed").iloc[:, :3]
     num_peaks = [peaks.shape[0]] * len(sruns)
     peaks_width = peaks["end"] - peaks["start"]
     total_bp_in_peaks = [peaks_width.sum()] * len(sruns)
+
+    if os.path.exists(f"{path_to_data}/{sruns[0]}/{sruns[0]}.q30.{species}.sort.bam"):
+        suffix = f"{species}.sort"
+    else:
+        suffix = "dedup"
 
     total_reads = []
     frip_enrich = []
     samples_frips = []
     for i, sample in enumerate(sruns):
-        bam = f"{path_to_data}/{sample}/{sample}.q30.dedup.bam"
+        bam = f"{path_to_data}/{sample}/{sample}.q30.{suffix}.bam"
         result = calculate_frip(bam, path_to_bed, nproc=nproc)
         samples_frips.append(result[0])
         total_reads.append(result[2])
