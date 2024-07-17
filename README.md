@@ -62,6 +62,13 @@ snakemake --use-conda --cores $Ncores --configfile config/config.yml
 Ensure that your computing resources are available.\
   Tips: [Number of cores] * [number of process in config.yml] <= the total number of cpus you have
 
+### creating metadata 
+to create metadata file, run
+```
+python fetch_metadata.py
+```
+after modifying config/fetch_metadata_config.yml 
+
 #### calculating FRiP
 
 After you generate bam files and bed files with the above command line, you can use `calculate_frip.py` to calculate FRiP value.
