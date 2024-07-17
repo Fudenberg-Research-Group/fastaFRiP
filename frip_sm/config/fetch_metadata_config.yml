@@ -1,16 +1,9 @@
-######## Parameters ####################################################
-dataset : 'Haarhuis_2017'
-geo_accession : 'GSE90994'
-path_to_accessions : '/home1/yxiao977/sc1/frip_sm_data/download_fastq/{dataset}/accessions.txt'
+parameters:
+  dataset : 'Haarhuis_2017'
+  geo_accession : 'GSE90994'
 
-# you need to check if the author upload antibody attribute
-contain_antibody_attribute : True
+input:
+  path_to_accessions : '/home1/yxiao977/proj/frip_sm_data/download_fastq/Haarhuis_2017/accessions.txt'
 
-# you need to check how the author names these attributes
-condition_key : 'genotype/variation'
-antibody_key : 'antibody'
-celltype_key : 'cell line'
-organism_key : 'organism'
-
-output_path : f'/home1/yxiao977/sc1/frip_sm_data/frip_result/{dataset}/metadata.txt'
-########################################################################
+output:
+  output_path : '/home1/yxiao977/sc1/test_frip_sm_data/frip_result/Haarhuis_2017/metadata.txt'
