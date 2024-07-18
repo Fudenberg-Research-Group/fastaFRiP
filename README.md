@@ -35,7 +35,7 @@ Finally, run the script by having the 'accession.txt' in the same folder:
 ./batch_download.sh
 ```
 
-### running the pipeline
+### Running the pipeline
 
 #### files specification
 Specify the locations of your input files (FASTQ and Bowtie index files) and output files, and choose whether to include spike-in normalization in the configuration file config.yml. Detailed explanations for each parameter are included in config.yml. 
