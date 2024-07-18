@@ -68,7 +68,7 @@ to create metadata file, run
 ```
 python fetch_metadata.py
 ```
-after modifying config/fetch_metadata_config.yml.\ 
+after modifying `config/fetch_metadata_config.yml`. 
 Example metadata table:
 
 <center>
@@ -80,7 +80,7 @@ Example metadata table:
 </center>
 
 ### Create FRiP table
-After you generate bam files and bed files with the above command line, you can specify path to the bed file, input data, and output data in `config/create_frip_table_config` , and use `create_frip_table.py` to calculate FRiP value, 
+After you generate bam files and bed files with the above command line, you can specify path to the bed file, input data, and output data in the config file `config/create_frip_table_config.yml` , and use `create_frip_table.py` to calculate FRiP value, 
 ```
 python create_frip_table.py
 ```
