@@ -60,7 +60,7 @@ def create_frip_table_from_bed(
         samples_frips.append(result[0])
         total_reads.append(result[2])
         frip_enrich.append(result[0] / (total_bp_in_peaks[0] / genome_size))
-        print(sample, "done")
+        print(sample, f"frip calculation done")
 
     frip_df = pd.DataFrame({"FRiP": samples_frips})
     extra_df = pd.DataFrame(

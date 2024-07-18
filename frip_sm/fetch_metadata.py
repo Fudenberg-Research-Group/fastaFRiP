@@ -32,7 +32,7 @@ for i, a in enumerate(accessions):
     experi_info = title[1].split(":")
     gsm.append(experi_info[0])
     experi_infos.append(experi_info[1])
-    print(i, a, "done")
+    print(i, a, "title has been fetched")
 
 df = pd.DataFrame(
     {"SRUN": accessions, "Experiment": experi_infos, "GSM_accession": gsm}
@@ -72,7 +72,7 @@ for i, row in df.iterrows():
         antibody.append(attributes[antibody_key])
     except IndexError:
         antibody.append(row["Experiment"].split("_")[-1])
-    print(a, "done")
+    print(i, accessions[i], "attributes have been fetched")
 
 df["Condition"] = condition
 df["Antibody"] = antibody
