@@ -21,7 +21,7 @@ By clicking on the 'SRA Run Selector', users can select and download specific da
 
 To quickly access the accession codes of ChIP-seq experiments, you can use the following command:
 ```
-grep "ChIP" SraRunTable.txt | awk -F, '{print $1}' > accession.txt
+grep "ChIP" SraRunTable.txt | awk -F, '{print $1}' > accessions.txt
 ```
 This command extracts the codes for each file, which can later be used to download the necessary data.
 
