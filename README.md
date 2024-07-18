@@ -76,10 +76,6 @@ After you generate bam files and bed files with the above command line, you can 
 python create_frip_table.py
 ```
 
-Example:
-```
-python calculate_frip.py --nproc 45 /home1/yxiao977/sc1/frip_sm_data/frip_result/Hansen2017/metadata.txt
-```
 * The metadata.txt should looks like this: each row indicates one comparison pair, and the FRiP value will be concatenated to this metadata table as a column after run calculate_frip.py
 
 <center>
