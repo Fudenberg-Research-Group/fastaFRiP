@@ -26,7 +26,7 @@ grep "ChIP" SraRunTable.txt | awk -F, '{print $1}' > accessions.txt
 ```
 This command extracts the codes for each file, which can later be used to download the necessary data.
 
-We have provided a script, batch_download.sh, to facilitate the data download. However, to run this script, you need to install fasterq-dump in your working conda environment:
+We have provided a script, batch_download.sh, to facilitate the data download. However, to run this script, you need to install `fasterq-dump`, which comes as part of `sra-tools`, in your working conda environment:
 ```
 conda install -c bioconda sra-tools
 ```
