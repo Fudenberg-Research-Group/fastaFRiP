@@ -68,7 +68,7 @@ to create metadata file, run
 ```
 python fetch_metadata.py
 ```
-after modifying config/fetch_metadata_config.yml 
+after modifying config/fetch_metadata_config.yml.\ 
 Example metadata table:
 
 <center>
