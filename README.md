@@ -71,9 +71,9 @@ after modifying config/fetch_metadata_config.yml
 
 #### calculating FRiP
 
-After you generate bam files and bed files with the above command line, you can use `calculate_frip.py` to calculate FRiP value.
+After you generate bam files and bed files with the above command line, you can specify path to the bed file, input data, and output data in `config/create_frip_table_config` , and use `create_frip_table.py` to calculate FRiP value, 
 ```
-python calculate_frip.py --nproc [number of cpus] [pathway to the metadata table]
+python create_frip_table.py
 ```
 
 Example:
