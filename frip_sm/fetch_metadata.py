@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import os
 import yaml
 from utils import fetch_metadata
 
@@ -9,8 +10,10 @@ with open("config/fetch_metadata_config.yml", "r") as f:
 ######## Parameters ####################################################
 dataset = config["parameters"]["dataset"]
 geo_accession = config["parameters"]["geo_accession"]
+
 path_to_accessions = config["input"]["path_to_accessions"]
-output_path = config["output"]["output_path"]
+
+output_dir = config["output"]["output_directory"]
 ########################################################################
 
 accessions = np.loadtxt(path_to_accessions, dtype="str")
@@ -93,4 +96,7 @@ cols = [
     "Experiment",
 ]
 
-df[cols].to_csv(output_path, sep="\t", index=False)
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+df[cols].to_csv(output_dir + '/metadata.txt', sep="\t", index=False)
