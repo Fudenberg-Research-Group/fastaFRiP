@@ -60,7 +60,7 @@ for condition in conditions:
     for i, bed in enumerate(beds):
         frip_df = create_frip_table_from_bed(
             samples_metadata,
-            path_to_bed,
+            bed,
             path_to_data,
             genome_size,
             species,
