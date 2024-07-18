@@ -44,7 +44,7 @@ for condition in conditions:
         peak_protein_sruns = [""]
     else:
         peak_proteins = df[
-            df["Condition"] == condition
+            (df["Condition"] == condition)
             & (df["Antibody"].str.contains(peak_protein, case=False))
         ].reset_index(drop=True)
 
