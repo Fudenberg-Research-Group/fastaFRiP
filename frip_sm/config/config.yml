@@ -1,13 +1,6 @@
-############################################
-# When commmenting parameters out, make sure
-# that each section still has at least one
-# uncommented parameter, otherwise it
-# will not get properly parsed.
-############################################
-
 input:
-    bowtie_index: '/home1/yxiao977/sc1/frip_sm_data/bowtie_index/hg38_mm10/hg38_mm10_index' # Pathway to the bowtie index files, e.g.: **/path_to_index_directory/file_prefix
-    ChIP_fastqs: '/home1/yxiao977/sc1/frip_sm_data/download_fastq/Liu_2020' # Pathway to the ChIP fastq files
+    bowtie_index: '/home1/yxiao977/proj/frip_sm_data/bowtie_index/hg38_mm10/hg38_mm10_index' # Pathway to the bowtie index files, e.g.: **/path_to_index_directory/file_prefix
+    ChIP_fastqs: '/home1/yxiao977/proj/frip_sm_data/download_fastq/Liu_2020' # Pathway to the ChIP fastq files
     metadata: '' # Leave it blank ('') if there is no input(control) samples. Pathway to the metadata.txt that have a table indicates the input(control) sample and the ChIP sample
 
 common_params:
@@ -27,12 +20,10 @@ macs2_params:
     broad: false # If true, then MACS2 will call broad peaks (Narrow peaks are typically associated with transcription factors)
 
 output:
-    ChIP_output_path: '/home1/yxiao977/sc1/frip_sm_data/ChIP_fastqs_maps/Liu_2020' # Pathway to the output directory
+    ChIP_output_path: '/home1/yxiao977/sc1/test_frip_sm_data/ChIP_fastqs_maps/Liu_2020' # Pathway to the output directory
 
 ##########################################################################################################################################
 # Run the pipeline with: 
 #       snakemake --use-conda --cores 5 --configfile config/config.yml
-# To calculate Frip use the python script 
-#       python calculate_frip.py --nproc 45 pathway/to/metadata/table
 ##########################################################################################################################################
    

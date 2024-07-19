@@ -160,6 +160,8 @@ else:
                 sample_name=have_input
             )
 
+# Set the prefix to activate the conda environment
+shell.prefix("source $(conda info --base)/etc/profile.d/conda.sh && conda activate fastq_frip_env && ")
 rule all:
     input:
         sam,
@@ -204,8 +206,6 @@ def get_input(wildcards):
 rule bowtie2_map:
     input:
         files = get_input
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample = "[a-zA-Z0-9_-]+"
     output:
@@ -226,8 +226,6 @@ rule bowtie2_map:
 rule samtools_filter:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.sam"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
     output:
@@ -241,8 +239,6 @@ rule samtools_fixmate:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam"
     params:
         sorted_name = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.sorted.bam"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
     output:
@@ -258,8 +254,6 @@ rule samtools_fixmate:
 rule samtools_sort:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
     output:
@@ -276,8 +270,6 @@ rule samtools_markdup:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     params:
         stats_file_path = f"{{maps}}/{{sample_name}}/{{sample}}.markdup.stats"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
     output:
@@ -294,8 +286,6 @@ rule samtools_markdup:
 rule bw:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.bam"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
     output:
@@ -311,8 +301,6 @@ rule bw:
 rule spikein_stats:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
-    conda:
-        "envs/fasta_frip_env.yml"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.spikein.stats"
     shell:
@@ -332,8 +320,6 @@ rule separate_reads:
     params:
         primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sam",
         spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sam",
-    conda:
-        "envs/fasta_frip_env.yml"
     output:
         output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam",
         output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sort.bam"
@@ -358,8 +344,6 @@ rule rescaling:
         ChIP_stats = f"{{maps}}/{{sample_name}}/{{sample}}.spikein.stats",
         ctrl_stats = lambda wildcards: f"{wildcards.maps}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.spikein.stats",
         ChIP_bam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam"
-    conda:
-        "envs/fasta_frip_env.yml"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.rescale.bw"
     shell:
@@ -382,8 +366,6 @@ rule bam_to_bed:
     params:
         output_prefix = f"{{sample}}.q{quality}.{{type}}", 
         output_dir = f"{{maps}}/{{sample_name}}/"
-    conda:
-        "envs/fasta_frip_env.yml"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}_peaks.narrowPeak"
     shell:
@@ -396,8 +378,6 @@ rule bam_to_bed_wi:
         output_prefix = f"{{sample}}.q{quality}.{{type}}.withinput", 
         output_dir = f"{{maps}}/{{sample_name}}/",
         ctrl_file = lambda wildcards: f"{wildcards.maps}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.q{quality}.{wildcards.type}.bam",
-    conda:
-        "envs/fasta_frip_env.yml"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.withinput_peaks.narrowPeak"
     shell:

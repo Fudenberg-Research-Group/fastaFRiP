@@ -1,9 +1,9 @@
-name: fasta_frip
 channels:
   - bioconda
   - conda-forge
   - defaults
 dependencies:
+  - sra-tools
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_gnu
   - _r-mutex=1.0.1=anacondar_1
@@ -247,6 +247,7 @@ dependencies:
   - zlib=1.2.13=hd590300_5
   - zstd=1.5.5=hfc55251_0
   - pip:
+      - ffq
       - alabaster==0.7.16
       - babel==2.14.0
       - contourpy==1.2.0
