@@ -1,17 +1,16 @@
-# fastaFRiP
+# fastqFRiP
 
 ## Description
-This is a pipeline for calculating FRiP ("fraction of reads in peaks") from fasta (or bed + fasta).
+This is a pipeline for calculating FRiP ("fraction of reads in peaks") from fastq (or bed + fastq).
 
 ## Prerequisites
 - python
-- Snakemake
-- ffq
 
 ## Installation
 ```
 git clone https://github.com/Fudenberg-Research-Group/fastaFRiP.git
 cd fastaFRiP/frip_sm
+conda env create -n  -f env/fastq_frip_env.yml
 ```
 ## Getting Started
 
