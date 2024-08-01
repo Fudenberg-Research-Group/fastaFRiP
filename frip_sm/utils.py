@@ -21,13 +21,15 @@ def fetch_metadata(accession):
 
 def calculate_frip(bam, bed, nproc=40):
     alignment = pysam.AlignmentFile(bam)
+    read = next(alignment.fetch())
+    read_length = read.query_length
     reads_counter = crpb.CountReadsPerBin([bam], bedFile=bed, numberOfProcessors=nproc)
     reads_at_peaks = reads_counter.run()
     total_reads = alignment.mapped
     total_reads_at_peaks = reads_at_peaks.sum(axis=0)
     frip = float(total_reads_at_peaks[0]) / total_reads
 
-    return frip, reads_at_peaks, total_reads
+    return frip, reads_at_peaks, total_reads, read_length
 
 
 def create_frip_table_from_bed(
@@ -59,7 +61,10 @@ def create_frip_table_from_bed(
         result = calculate_frip(bam, path_to_bed, nproc=nproc)
         samples_frips.append(result[0])
         total_reads.append(result[2])
-        frip_enrich.append(result[0] / (total_bp_in_peaks[0] / genome_size))
+        read_length = result[3]
+        prob_read_in_peak = (total_bp_in_peaks[0] + num_peaks[0] * (read_length - 1)) / genome_size
+        print(prob_read_in_peak)
+        frip_enrich.append(result[0] / prob_read_in_peak) # This is the ratio of observed reads in peaks / expected reads in peaks
         print(sample, f"frip calculation done")
 
     frip_df = pd.DataFrame({"FRiP": samples_frips})

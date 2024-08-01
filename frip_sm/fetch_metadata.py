@@ -2,9 +2,14 @@ import numpy as np
 import pandas as pd
 import os
 import yaml
+import argparse
 from utils import fetch_metadata
 
-with open("config/fetch_metadata_config.yml", "r") as f:
+parser = argparse.ArgumentParser(description='Fetch a metadata table')
+parser.add_argument('config_path', type=str, help='Path to the configuration file.')
+args = parser.parse_args()
+
+with open(args.config_path, "r") as f:
     config = yaml.safe_load(f)
 
 ######## Parameters ####################################################
@@ -79,7 +84,7 @@ df["Antibody"] = antibody
 df["Celltype"] = celltype
 df["Organism"] = organism
 
-df["Peak BED"] = ["CTCF"] * len(df)
+df["Peak_ChIP"] = ["N/A"] * len(df)
 df["author_year"] = [dataset] * len(df)
 df["GEO"] = [geo_accession] * len(df)
 
@@ -88,7 +93,7 @@ cols = [
     "Celltype",
     "Condition",
     "Antibody",
-    "Peak BED",
+    "Peak_ChIP",
     "author_year",
     "SRUN",
     "GSM_accession",

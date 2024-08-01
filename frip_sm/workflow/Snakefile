@@ -208,6 +208,8 @@ rule bowtie2_map:
         files = get_input
     wildcard_constraints:
         sample = "[a-zA-Z0-9_-]+"
+    resources:
+        cpus=process
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.sam"
     shell:
@@ -228,6 +230,8 @@ rule samtools_filter:
         f"{{maps}}/{{sample_name}}/{{sample}}.sam"
     wildcard_constraints:
         sample="[^.]+"
+    resources:
+        cpus=process
     output:
         temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam")
     shell:
@@ -241,6 +245,8 @@ rule samtools_fixmate:
         sorted_name = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.sorted.bam"
     wildcard_constraints:
         sample="[^.]+"
+    resources:
+        cpus=process
     output:
         temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam")
     shell:
@@ -256,6 +262,8 @@ rule samtools_sort:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam"
     wildcard_constraints:
         sample="[^.]+"
+    resources:
+        cpus=process
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     shell:
@@ -272,6 +280,8 @@ rule samtools_markdup:
         stats_file_path = f"{{maps}}/{{sample_name}}/{{sample}}.markdup.stats"
     wildcard_constraints:
         sample="[^.]+"
+    resources:
+        cpus=process
     output:
         sam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam",
         bam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.bam"
@@ -320,6 +330,8 @@ rule separate_reads:
     params:
         primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sam",
         spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sam",
+    resources:
+        cpus=process
     output:
         output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam",
         output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sort.bam"
