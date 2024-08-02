@@ -49,8 +49,8 @@ antibody = []
 celltype = []
 organism = []
 
-KEY_WORDS = ["gen", "cell", "organism"]
-attribute_keys = []
+KEY_WORDS = ["gen", "cell", "organism", "anti"]
+attribute_keys = {}
 for i, row in df.iterrows():
     a = row["GSM_accession"].replace(" ", "")
     while True:
@@ -64,23 +64,22 @@ for i, row in df.iterrows():
         key_df = pd.DataFrame({"Keys": attributes.keys()})
         for kw in KEY_WORDS:
             try:
-                attribute_keys.append(
-                    key_df[key_df["Keys"].str.contains(kw, case=False)].iloc[0, 0]
-                )
+                attribute_keys[kw] = key_df[key_df["Keys"].str.contains(kw, case=False)].iloc[0, 0]
             except IndexError:
-                print(f"There is no attributes match with the substring {kw}")
-
-    condition.append(attributes[attribute_keys[0]])
-    celltype.append(attributes[attribute_keys[1]])
-    organism.append(attributes[attribute_keys[2]])
+                print(f"There is no attributes match with the substring {kw}, so we add its title here, and you can check manually")
+                attribute_keys[kw] = 'title'
+    try:
+        condition.append(attributes[attribute_keys[KEY_WORDS[0]]])
+    except IndexError:
+        condition.append(row["Experiment"])
+        
+    celltype.append(attributes[attribute_keys[KEY_WORDS[1]]])
+    organism.append(attributes[attribute_keys[KEY_WORDS[2]]])
 
     try:
-        antibody_key = key_df[key_df["Keys"].str.contains("anti", case=False)].iloc[
-            0, 0
-        ]
-        antibody.append(attributes[antibody_key])
+        antibody.append(attributes[attribute_keys[KEY_WORDS[3]]])
     except IndexError:
-        antibody.append(row["Experiment"].split("_")[-1])
+        antibody.append(row["Experiment"])
     print(i, accessions[i], "attributes have been fetched")
 
 df["Condition"] = condition
