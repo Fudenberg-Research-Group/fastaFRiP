@@ -53,9 +53,13 @@ KEY_WORDS = ["gen", "cell", "organism"]
 attribute_keys = []
 for i, row in df.iterrows():
     a = row["GSM_accession"].replace(" ", "")
-    data = fetch_metadata(a)
-    attributes = data[a]["samples"][list(data[a]["samples"].keys())[0]]["attributes"]
-
+    while True:
+        try:
+            data = fetch_metadata(a)
+            attributes = data[a]["samples"][list(data[a]["samples"].keys())[0]]["attributes"]
+        except TypeError:
+            continue
+        break
     if len(attribute_keys) == 0:
         key_df = pd.DataFrame({"Keys": attributes.keys()})
         for kw in KEY_WORDS:
