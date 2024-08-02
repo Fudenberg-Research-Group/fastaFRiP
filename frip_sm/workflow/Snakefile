@@ -379,12 +379,12 @@ rule bam_to_bed:
 
 rule bam_to_bed_wi:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.bam"
+        bam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.bam",
+        ctrl_file = lambda wildcards: f"{wildcards.maps}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.q{quality}.{wildcards.type}.bam",
     params:
         output_prefix = f"{{sample}}.q{quality}.{{type}}.withinput", 
-        output_dir = f"{{maps}}/{{sample_name}}/",
-        ctrl_file = lambda wildcards: f"{wildcards.maps}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.q{quality}.{wildcards.type}.bam",
+        output_dir = f"{{maps}}/{{sample_name}}/"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.withinput_peaks.narrowPeak"
     shell:
-        "macs2 callpeak {broad_peaks_option} -t {input} -c {params.ctrl_file} -n {params.output_prefix} --outdir {params.output_dir}"
+        "macs2 callpeak {broad_peaks_option} -t {input.bam} -c {input.ctrl_file} -n {params.output_prefix} --outdir {params.output_dir}"
