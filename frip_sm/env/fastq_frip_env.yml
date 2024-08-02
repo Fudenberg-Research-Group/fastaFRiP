@@ -248,6 +248,7 @@ dependencies:
   - zstd=1.5.5=hfc55251_0
   - pip:
       - ffq
+      - bioframe
       - alabaster==0.7.16
       - babel==2.14.0
       - contourpy==1.2.0
