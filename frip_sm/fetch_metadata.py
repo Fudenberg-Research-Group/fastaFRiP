@@ -70,7 +70,7 @@ for i, row in df.iterrows():
                 attribute_keys[kw] = 'title'
     try:
         condition.append(attributes[attribute_keys[KEY_WORDS[0]]])
-    except IndexError:
+    except KeyError:
         condition.append(row["Experiment"])
         
     celltype.append(attributes[attribute_keys[KEY_WORDS[1]]])
@@ -78,7 +78,7 @@ for i, row in df.iterrows():
 
     try:
         antibody.append(attributes[attribute_keys[KEY_WORDS[3]]])
-    except IndexError:
+    except KeyError:
         antibody.append(row["Experiment"])
     print(i, accessions[i], "attributes have been fetched")
 
