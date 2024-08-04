@@ -83,7 +83,9 @@ for condition in conditions:
 frip_metadata = pd.concat(frip_tables, axis=0)
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-    
+
+bed_filename = f"({path_to_bed.split('/')[-1].split('.')[0]})"
+
 frip_metadata.to_csv(
-    output_dir + f"/{CONDITION}_{peak_protein}_frips.txt", sep="\t", index=False
+    output_dir + f"/{CONDITION}_{peak_protein}{bed_filename}_frips.txt", sep="\t", index=False
 )
