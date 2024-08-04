@@ -41,6 +41,7 @@ if CONDITION == 'all':
 else:
     conditions = [CONDITION]
 
+bed_filename = f"({path_to_bed.split('/')[-1].split('.')[0]})"
 frip_tables = []
 for condition in conditions:
     samples_metadata = df[df["Condition"].str.contains(condition, case=False)].reset_index(
@@ -49,7 +50,7 @@ for condition in conditions:
 
     if path_to_bed != "":
         beds = [path_to_bed]
-        peak_protein_sruns = [""]
+        peak_protein_sruns = [bed_filename]
     else:
         peak_proteins = df[
             (df["Condition"].str.contains(condition, case=False))
@@ -83,8 +84,6 @@ for condition in conditions:
 frip_metadata = pd.concat(frip_tables, axis=0)
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-
-bed_filename = f"({path_to_bed.split('/')[-1].split('.')[0]})"
 
 frip_metadata.to_csv(
     output_dir + f"/{CONDITION}_{peak_protein}{bed_filename}_frips.txt", sep="\t", index=False
