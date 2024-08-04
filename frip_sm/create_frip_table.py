@@ -43,7 +43,7 @@ else:
 
 frip_tables = []
 for condition in conditions:
-    samples_metadata = df[df["Condition"] == condition].reset_index(
+    samples_metadata = df[df["Condition"].str.contains(condition, case=False)].reset_index(
         drop=True
     )
 
@@ -52,7 +52,7 @@ for condition in conditions:
         peak_protein_sruns = [""]
     else:
         peak_proteins = df[
-            (df["Condition"] == condition)
+            (df["Condition"].str.contains(condition, case=False))
             & (df["Antibody"].str.contains(peak_protein, case=False))
         ].reset_index(drop=True)
 
