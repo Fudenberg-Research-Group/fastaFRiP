@@ -25,7 +25,9 @@ def calculate_frip(bam, bed, nproc=40):
     read_length = read.query_length
     peaks_table = bf.read_table(bed, schema='bed').iloc[:,:3]
 
-    distance_between_peaks = bf.closest(peaks_table, None)['distance'].to_numpy()
+    distance_between_peaks = bf.closest(peaks_table, None)
+    distance_between_peaks[distance_between_peaks['distance'].isna()] = read_length # NA is because there is no peaks within the same scaffold or chromosome, so we set the distance to read_length for the below process
+    distance_between_peaks = distance_between_peaks['distance'].to_numpy()
     distance_between_peaks[distance_between_peaks >= read_length] = read_length - 1
     outside_regions_for_reads_overlap_peaks = distance_between_peaks.sum()
 
@@ -69,9 +71,8 @@ def create_frip_table_from_bed(
         total_reads.append(result[2])
         outside_regions_for_reads_overlap_peaks = result[3]
         prob_read_in_peak = (total_bp_in_peaks[0] + outside_regions_for_reads_overlap_peaks) / genome_size
-        print(prob_read_in_peak)
         frip_enrich.append(result[0] / prob_read_in_peak) # This is the ratio of observed reads in peaks / expected reads in peaks
-        print(sample, f"frip calculation done")
+        print(sample, f"frip calculation done:", prob_read_in_peak)
 
     frip_df = pd.DataFrame({"FRiP": samples_frips})
     extra_df = pd.DataFrame(
