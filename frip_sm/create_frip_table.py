@@ -39,12 +39,13 @@ df['Peak_ChIP'] = peak_protein
 if CONDITION == 'all':
     conditions = df.Condition.unique().tolist()
 else:
-    conditions = [CONDITION]
+    c = df[df["Condition"].str.contains(CONDITION, case=False)]["Condition"].iloc[0]
+    conditions = [c]
 
 bed_filename = f"({path_to_bed.split('/')[-1].split('.')[0]})"
 frip_tables = []
 for condition in conditions:
-    samples_metadata = df[df["Condition"].str.contains(condition, case=False)].reset_index(
+    samples_metadata = df[df["Condition"] == condition].reset_index(
         drop=True
     )
 
@@ -53,7 +54,7 @@ for condition in conditions:
         peak_protein_sruns = [bed_filename]
     else:
         peak_proteins = df[
-            (df["Condition"].str.contains(condition, case=False))
+            (df["Condition"] == condition)
             & (df["Antibody"].str.contains(peak_protein, case=False))
         ].reset_index(drop=True)
 
@@ -64,7 +65,6 @@ for condition in conditions:
             glob.glob(f"{path_to_data}/{p_srun}/*.narrowPeak")[0]
             for p_srun in peak_protein_sruns
         ]
-
     frip_dfs = []
     for i, bed in enumerate(beds):
         frip_df = create_frip_table_from_bed(
