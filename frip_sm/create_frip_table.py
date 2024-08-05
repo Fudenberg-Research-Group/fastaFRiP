@@ -48,7 +48,6 @@ for condition in conditions:
     samples_metadata = df[df["Condition"] == condition].reset_index(
         drop=True
     )
-
     if path_to_bed != "":
         beds = [path_to_bed]
         peak_protein_sruns = [bed_filename]

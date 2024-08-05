@@ -70,9 +70,9 @@ def create_frip_table_from_bed(
         samples_frips.append(result[0])
         total_reads.append(result[2])
         outside_regions_for_reads_overlap_peaks = result[3]
-        prob_read_in_peak = (total_bp_in_peaks[0] + outside_regions_for_reads_overlap_peaks) / genome_size
-        frip_enrich.append(result[0] / prob_read_in_peak) # This is the ratio of observed reads in peaks / expected reads in peaks
-        print(sample, f"frip calculation done:", prob_read_in_peak)
+        expected_prob_read_in_peak = (total_bp_in_peaks[0] + outside_regions_for_reads_overlap_peaks) / genome_size
+        frip_enrich.append(result[0] / expected_prob_read_in_peak) # This is the ratio of observed reads in peaks / expected reads in peaks
+        print(sample, f"frip calculation done:", frip_enrich[-1])
 
     frip_df = pd.DataFrame({"FRiP": samples_frips})
     extra_df = pd.DataFrame(
