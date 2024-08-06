@@ -21,13 +21,23 @@ def fetch_metadata(accession):
 
 def calculate_frip(bam, bed, nproc=40):
     alignment = pysam.AlignmentFile(bam)
+    read = next(alignment.fetch())
+    read_length = read.query_length
+    peaks_table = bf.read_table(bed, schema='bed').iloc[:,:3]
+
+    distance_between_peaks = bf.closest(peaks_table, None)
+    distance_between_peaks[distance_between_peaks['distance'].isna()] = read_length # NA is because there is no peaks within the same scaffold or chromosome, so we set the distance to read_length for the below process
+    distance_between_peaks = distance_between_peaks['distance'].to_numpy()
+    distance_between_peaks[distance_between_peaks >= read_length] = read_length - 1
+    outside_regions_for_reads_overlap_peaks = distance_between_peaks.sum()
+
     reads_counter = crpb.CountReadsPerBin([bam], bedFile=bed, numberOfProcessors=nproc)
     reads_at_peaks = reads_counter.run()
     total_reads = alignment.mapped
     total_reads_at_peaks = reads_at_peaks.sum(axis=0)
     frip = float(total_reads_at_peaks[0]) / total_reads
 
-    return frip, reads_at_peaks, total_reads
+    return frip, reads_at_peaks, total_reads, outside_regions_for_reads_overlap_peaks
 
 
 def create_frip_table_from_bed(
@@ -59,8 +69,10 @@ def create_frip_table_from_bed(
         result = calculate_frip(bam, path_to_bed, nproc=nproc)
         samples_frips.append(result[0])
         total_reads.append(result[2])
-        frip_enrich.append(result[0] / (total_bp_in_peaks[0] / genome_size))
-        print(sample, f"frip calculation done")
+        outside_regions_for_reads_overlap_peaks = result[3]
+        expected_prob_read_in_peak = (total_bp_in_peaks[0] + outside_regions_for_reads_overlap_peaks) / genome_size
+        frip_enrich.append(result[0] / expected_prob_read_in_peak) # This is the ratio of observed reads in peaks / expected reads in peaks
+        print(sample, f"frip calculation done:", frip_enrich[-1])
 
     frip_df = pd.DataFrame({"FRiP": samples_frips})
     extra_df = pd.DataFrame(

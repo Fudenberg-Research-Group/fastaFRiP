@@ -2,9 +2,14 @@ import numpy as np
 import pandas as pd
 import os
 import yaml
+import argparse
 from utils import fetch_metadata
 
-with open("config/fetch_metadata_config.yml", "r") as f:
+parser = argparse.ArgumentParser(description='Fetch a metadata table')
+parser.add_argument('config_path', type=str, help='Path to the configuration file.')
+args = parser.parse_args()
+
+with open(args.config_path, "r") as f:
     config = yaml.safe_load(f)
 
 ######## Parameters ####################################################
@@ -44,34 +49,37 @@ antibody = []
 celltype = []
 organism = []
 
-KEY_WORDS = ["gen", "cell", "organism"]
-attribute_keys = []
+KEY_WORDS = ["gen", "cell", "organism", "anti"]
+attribute_keys = {}
 for i, row in df.iterrows():
     a = row["GSM_accession"].replace(" ", "")
-    data = fetch_metadata(a)
-    attributes = data[a]["samples"][list(data[a]["samples"].keys())[0]]["attributes"]
-
+    while True:
+        try:
+            data = fetch_metadata(a)
+            attributes = data[a]["samples"][list(data[a]["samples"].keys())[0]]["attributes"]
+        except TypeError:
+            continue
+        break
     if len(attribute_keys) == 0:
         key_df = pd.DataFrame({"Keys": attributes.keys()})
         for kw in KEY_WORDS:
             try:
-                attribute_keys.append(
-                    key_df[key_df["Keys"].str.contains(kw, case=False)].iloc[0, 0]
-                )
+                attribute_keys[kw] = key_df[key_df["Keys"].str.contains(kw, case=False)].iloc[0, 0]
             except IndexError:
-                print(f"There is no attributes match with the substring {kw}")
-
-    condition.append(attributes[attribute_keys[0]])
-    celltype.append(attributes[attribute_keys[1]])
-    organism.append(attributes[attribute_keys[2]])
+                print(f"There is no attributes match with the substring {kw}, so we add its title here, and you can check manually")
+                attribute_keys[kw] = 'title'
+    try:
+        condition.append(attributes[attribute_keys[KEY_WORDS[0]]])
+    except KeyError:
+        condition.append(row["Experiment"])
+        
+    celltype.append(attributes[attribute_keys[KEY_WORDS[1]]])
+    organism.append(attributes[attribute_keys[KEY_WORDS[2]]])
 
     try:
-        antibody_key = key_df[key_df["Keys"].str.contains("anti", case=False)].iloc[
-            0, 0
-        ]
-        antibody.append(attributes[antibody_key])
-    except IndexError:
-        antibody.append(row["Experiment"].split("_")[-1])
+        antibody.append(attributes[attribute_keys[KEY_WORDS[3]]])
+    except KeyError:
+        antibody.append(row["Experiment"])
     print(i, accessions[i], "attributes have been fetched")
 
 df["Condition"] = condition
@@ -79,7 +87,7 @@ df["Antibody"] = antibody
 df["Celltype"] = celltype
 df["Organism"] = organism
 
-df["Peak BED"] = ["CTCF"] * len(df)
+df["Peak_ChIP"] = ["N/A"] * len(df)
 df["author_year"] = [dataset] * len(df)
 df["GEO"] = [geo_accession] * len(df)
 
@@ -88,7 +96,7 @@ cols = [
     "Celltype",
     "Condition",
     "Antibody",
-    "Peak BED",
+    "Peak_ChIP",
     "author_year",
     "SRUN",
     "GSM_accession",
