@@ -38,6 +38,8 @@ df = pd.read_table(path_to_metadata)
 df['Peak_ChIP'] = peak_protein
 if CONDITION == 'all':
     conditions = df.Condition.unique().tolist()
+elif CONDITION[0] == '~':
+    conditions = df[~df["Condition"].str.contains(CONDITION[1:], case=False)]["Condition"].unique().tolist()
 else:
     c = df[df["Condition"].str.contains(CONDITION, case=False)]["Condition"].iloc[0]
     conditions = [c]
