@@ -3,6 +3,7 @@ import yaml
 import glob
 import os
 import argparse
+import warnings
 from utils import create_frip_table_from_bed
 
 GENOME_SIZE = {"hg38": 3.1*10**9, "mm39": 2.7*10**9}
@@ -60,7 +61,9 @@ for condition in conditions:
         ].reset_index(drop=True)
 
         if len(peak_proteins) == 0:
-            raise IndexError(f"There is no {peak_protein} sample under this condition ({condition}). Please try to use <path_to_bed> parameter in config file to specify the bed file you want to use for this condition")
+            warnings.warn(f"There is no {peak_protein} sample under this condition: {condition}. Please try to use <path_to_bed> parameter in config file to specify the bed file you want to use for this condition")
+            continue 
+        
         peak_protein_sruns = peak_proteins["SRUN"].to_list()
         beds = [
             glob.glob(f"{path_to_data}/{p_srun}/*.narrowPeak")[0]
