@@ -38,9 +38,9 @@ except KeyError:
 df = pd.read_table(path_to_metadata)
 df['Peak_ChIP'] = peak_protein
 if CONDITION == 'all':
-    conditions = df.Condition.unique().tolist()
+    conditions = df.Condition.unique()
 elif CONDITION[0] == '~':
-    conditions = df[~df["Condition"].str.contains(CONDITION[1:], case=False)]["Condition"].unique().tolist()
+    conditions = df[~df["Condition"].str.contains(CONDITION[1:], case=False)]["Condition"].unique()
 else:
     conditions = df[df["Condition"].str.contains(CONDITION, case=False)]["Condition"].unique()
     
