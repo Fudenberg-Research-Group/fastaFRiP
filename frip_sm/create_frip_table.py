@@ -42,9 +42,8 @@ if CONDITION == 'all':
 elif CONDITION[0] == '~':
     conditions = df[~df["Condition"].str.contains(CONDITION[1:], case=False)]["Condition"].unique().tolist()
 else:
-    c = df[df["Condition"].str.contains(CONDITION, case=False)]["Condition"].iloc[0]
-    conditions = [c]
-
+    conditions = df[df["Condition"].str.contains(CONDITION, case=False)]["Condition"].unique()
+    
 bed_filename = f"({path_to_bed.split('/')[-1].split('.')[0]})"
 frip_tables = []
 for condition in conditions:
