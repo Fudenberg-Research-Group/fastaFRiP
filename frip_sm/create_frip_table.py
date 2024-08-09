@@ -44,7 +44,7 @@ elif CONDITION[0] == '~':
 else:
     conditions = df[df["Condition"].str.contains(CONDITION, case=False)]["Condition"].unique()
     
-bed_filename = f"({path_to_bed.split('/')[-1].split('.')[0]})"
+bed_filename = f"{path_to_bed.split('/')[-1].split('.')[0]}"
 frip_tables = []
 for condition in conditions:
     samples_metadata = df[df["Condition"] == condition].reset_index(
