@@ -14,6 +14,8 @@ samtools_params:
 spikein_params:
     index_primary: '' # Name of target species. Leave it blank ('') if spike-in is not included in the experiment
     index_spikein: '' # Name of spike-in species. Leave it blank ('') if spike-in is not included in the experiment
+
+bamcoverage_params:
     binsize: 20 # Size of the bins, in bases, for the output of the bigwig/bedgraph file.
 
 macs2_params:

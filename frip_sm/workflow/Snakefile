@@ -18,7 +18,7 @@ process = config["common_params"]["processes"]
 include_spikein = config["common_params"]["include_spikein"]
 index_primary = config["spikein_params"]["index_primary"]
 index_spikein = config["spikein_params"]["index_spikein"]
-binsize = config["spikein_params"]["binsize"]
+binsize = config["bamcoverage_params"]["binsize"]
 
 quality = config["samtools_params"]["quality"]
 distance = config["samtools_params"]["distance"]
