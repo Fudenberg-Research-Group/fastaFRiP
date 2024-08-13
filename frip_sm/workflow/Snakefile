@@ -18,7 +18,7 @@ process = config["common_params"]["processes"]
 include_spikein = config["common_params"]["include_spikein"]
 index_primary = config["spikein_params"]["index_primary"]
 index_spikein = config["spikein_params"]["index_spikein"]
-binsize = config["spikein_params"]["binsize"]
+binsize = config["bamcoverage_params"]["binsize"]
 
 quality = config["samtools_params"]["quality"]
 distance = config["samtools_params"]["distance"]
@@ -160,6 +160,8 @@ else:
                 sample_name=have_input
             )
 
+# Set the prefix to activate the conda environment
+shell.prefix("source $(conda info --base)/etc/profile.d/conda.sh && conda activate fastq_frip_env && ")
 rule all:
     input:
         sam,
@@ -204,10 +206,9 @@ def get_input(wildcards):
 rule bowtie2_map:
     input:
         files = get_input
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample = "[a-zA-Z0-9_-]+"
+    threads: process
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.sam"
     shell:
@@ -226,10 +227,9 @@ rule bowtie2_map:
 rule samtools_filter:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.sam"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
+    threads: process
     output:
         temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam")
     shell:
@@ -241,10 +241,9 @@ rule samtools_fixmate:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.bam"
     params:
         sorted_name = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.sorted.bam"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
+    threads: process
     output:
         temp(f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam")
     shell:
@@ -258,10 +257,9 @@ rule samtools_fixmate:
 rule samtools_sort:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.bam"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
+    threads: process
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     shell:
@@ -276,10 +274,9 @@ rule samtools_markdup:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.fixed.sort.bam"
     params:
         stats_file_path = f"{{maps}}/{{sample_name}}/{{sample}}.markdup.stats"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
+    threads: process
     output:
         sam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam",
         bam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.bam"
@@ -294,8 +291,6 @@ rule samtools_markdup:
 rule bw:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.bam"
-    conda:
-        "envs/fasta_frip_env.yml"
     wildcard_constraints:
         sample="[^.]+"
     output:
@@ -311,14 +306,12 @@ rule bw:
 rule spikein_stats:
     input:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.dedup.sam"
-    conda:
-        "envs/fasta_frip_env.yml"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.spikein.stats"
     shell:
         """
-        primary_reads=$(( `grep -c '.*{index_primary}.*' {input}` - 22 )) 
-        spikein_reads=$(( `grep -c '.*{index_spikein}.*' {input}` - 26 )) 
+        primary_reads=$(( `grep -c '.*{index_primary}.*' {input}` )) 
+        spikein_reads=$(( `grep -c '.*{index_spikein}.*' {input}` )) 
         echo -e "{index_primary}_reads=$primary_reads" >> {output} 
         echo "{index_spikein}_reads=$spikein_reads" >> {output} 
         echo "ratio of {index_primary} to {index_spikein} reads is" >> {output} 
@@ -332,8 +325,7 @@ rule separate_reads:
     params:
         primary_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sam",
         spikein_sam_tmp = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sam",
-    conda:
-        "envs/fasta_frip_env.yml"
+    threads: process
     output:
         output1 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam",
         output2 = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_spikein}.sort.bam"
@@ -358,8 +350,6 @@ rule rescaling:
         ChIP_stats = f"{{maps}}/{{sample_name}}/{{sample}}.spikein.stats",
         ctrl_stats = lambda wildcards: f"{wildcards.maps}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.spikein.stats",
         ChIP_bam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{index_primary}.sort.bam"
-    conda:
-        "envs/fasta_frip_env.yml"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.rescale.bw"
     shell:
@@ -382,8 +372,6 @@ rule bam_to_bed:
     params:
         output_prefix = f"{{sample}}.q{quality}.{{type}}", 
         output_dir = f"{{maps}}/{{sample_name}}/"
-    conda:
-        "envs/fasta_frip_env.yml"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}_peaks.narrowPeak"
     shell:
@@ -391,14 +379,12 @@ rule bam_to_bed:
 
 rule bam_to_bed_wi:
     input:
-        f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.bam"
+        bam = f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.bam",
+        ctrl_file = lambda wildcards: f"{wildcards.maps}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.q{quality}.{wildcards.type}.bam",
     params:
         output_prefix = f"{{sample}}.q{quality}.{{type}}.withinput", 
-        output_dir = f"{{maps}}/{{sample_name}}/",
-        ctrl_file = lambda wildcards: f"{wildcards.maps}/{get_control(wildcards.sample_name)}/{get_control(wildcards.sample_name)}.q{quality}.{wildcards.type}.bam",
-    conda:
-        "envs/fasta_frip_env.yml"
+        output_dir = f"{{maps}}/{{sample_name}}/"
     output:
         f"{{maps}}/{{sample_name}}/{{sample}}.q{quality}.{{type}}.withinput_peaks.narrowPeak"
     shell:
-        "macs2 callpeak {broad_peaks_option} -t {input} -c {params.ctrl_file} -n {params.output_prefix} --outdir {params.output_dir}"
+        "macs2 callpeak {broad_peaks_option} -t {input.bam} -c {input.ctrl_file} -n {params.output_prefix} --outdir {params.output_dir}"
