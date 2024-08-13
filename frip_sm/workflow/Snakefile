@@ -310,8 +310,8 @@ rule spikein_stats:
         f"{{maps}}/{{sample_name}}/{{sample}}.spikein.stats"
     shell:
         """
-        primary_reads=$(( `grep -c '.*{index_primary}.*' {input}` - 22 )) 
-        spikein_reads=$(( `grep -c '.*{index_spikein}.*' {input}` - 26 )) 
+        primary_reads=$(( `grep -c '.*{index_primary}.*' {input}` )) 
+        spikein_reads=$(( `grep -c '.*{index_spikein}.*' {input}` )) 
         echo -e "{index_primary}_reads=$primary_reads" >> {output} 
         echo "{index_spikein}_reads=$spikein_reads" >> {output} 
         echo "ratio of {index_primary} to {index_spikein} reads is" >> {output} 
