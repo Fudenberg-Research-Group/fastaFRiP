@@ -1,14 +1,14 @@
 # ChIP-FRiP
 
 ## Description
-ChIP-FRiP provides a Snakemake pipeline for calculating FRiP ("Fraction of Reads in Peaks") from FASTQ, specifically for enabling the fraction of reads for one protein of interest in the peaks of another protein. FRiP is calculated from a BAM (Binary Alignment Map) file and a BED (Browser Extensible Data) file. Publicly-available datasets provide FASTQ files. However, BAM files are often not provided, yet essential for calculating FRiP. The ChIP-FRiP pipeline thus covers: mapping and filtering FASTQ files to generate BAM files (with [Bowtie2](https://github.com/BenLangmead/bowtie2) and [SAMtools](https://github.com/samtools/samtools)) and calling peaks (with [MACS2](https://github.com/macs3-project/MACS)) to generate BED files. 
+ChIP-FRiP provides a Snakemake pipeline for calculating FRiP ("Fraction of Reads in Peaks") from FASTQ files, specifically for calculating the fraction of reads for one protein of interest in the peaks of another protein. FRiP is calculated from a BAM (Binary Alignment Map) file and a BED (Browser Extensible Data) peak file. Publicly-available datasets typically provide FASTQ files but not the BAM files with mapped reads essential for calculating FRiP. The ChIP-FRiP pipeline thus covers: mapping and filtering FASTQ files to generate BAM files (with [Bowtie2](https://github.com/BenLangmead/bowtie2) and [SAMtools](https://github.com/samtools/samtools)), calling peaks (with [MACS2](https://github.com/macs3-project/MACS)) to generate BED files, and generating bigwig files (with [bamCoverage](https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html)) to visualize ChIP results. 
 
 The ChIP-FRiP pipeline can be used to process ChIP-seq datasets that are:
 - spike-in or not spike-in
 - single-end or paired-end 
 - with input or with no input
 
-This repository additional provides scripts for:
+This repository additionally provides scripts for:
 - managing metadata from SRA/GEO (via [ffq](https://github.com/pachterlab/ffq))
 - computing FRiP (via [bioframe](https://github.com/open2c/bioframe))
 
@@ -74,14 +74,14 @@ To rescale the bigwig file and call peaks based on an input (control) sample, th
 | SRR20664888 | SRR20664892 |
 </center>
 
-Sample names should match those in the FASTQ files (e.g., SRR20664892.fastq). Any samples that are not appear on the table will be recognized as samples without input automatically. 
+Sample names should match those in the FASTQ files (e.g., SRR20664892.fastq). Any samples that do not appear on the table will be recognized as samples without input automatically. 
 
-***Note:*** *The walkthrough uses the ChIP & Input table above. However, the pipeline also allows for processesing datasets that do not provide input files. A Python script for generating a ChIP Input table is provided: [examples/generate_chip_input_table.ipynb](https://github.com/Fudenberg-Research-Group/ChIP-FRiP/tree/main/examples).*
+***Note:*** *The walkthrough uses the ChIP & Input table above. However, the pipeline also allows for processing datasets that do not provide input files. A Python script for generating a ChIP Input table is provided: [examples/generate_chip_input_table.ipynb](https://github.com/Fudenberg-Research-Group/ChIP-FRiP/tree/main/examples).*
 
 ### Bowtie2 index files
 ChIP-FRiP uses [Bowtie2](https://github.com/BenLangmead/bowtie2) for alignment. 
 
-***Note:*** *For the walkthrough, please download the pre-made combined index for hg38 and mm10. This is ~6 Gb, so download may take a few minutes.*
+***Note:*** *For the walkthrough, please download the pre-made combined index for hg38 and mm10 (as the experiment was performed in human cells with a mouse spike-in). This is ~6 Gb, so download may take a few minutes.*
 * 
 ```
 mkdir -p ../data/bowtie_index
@@ -101,7 +101,7 @@ For many genomes, pre-generated bowtie2 index files can be obtained from NCBI or
 | mm10/bowtie2 index |  [Link](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/635/GCA_000001635.5_GRCm38.p3/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001635.5_GRCm38.p3_no_alt_analysis_set.fna.bowtie_index.tar.gz)|
 </center>
 
-Most of time, you can use bowtie2 index files directly by running the following command:
+Most of time, you can use bowtie2 index files directly by running the following command to extract the files:
 ```
 tar -xvzf GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index.tar.gz
 ```
@@ -136,7 +136,7 @@ snakemake --use-conda --cores [number of threads] --configfile ../config/config.
 ```
 Ensure that your computing resources are available.
 
-***Note:*** *[number of threads] = [number of jobs] * [number of processes in config.yml]. And, [numer of threads] <= the total number of threads you have. With [number of threads] = 50 and [number of processes in config.yml] = 10, it takes ~40 minutes to finish the Snakemake on the example data*
+***Note:*** *[number of threads] = [number of jobs] * [number of processes in config.yml]. And, [number of threads] <= the total number of threads you have. With [number of threads] = 50 and [number of processes in config.yml] = 10, it takes ~40 minutes to finish the Snakemake on the example data*
 
 ### Pipeline output
 
@@ -145,6 +145,7 @@ Ensure that your computing resources are available.
 | .narrowPeak | BED file of identified peaks   |
 | .<primary_assembly>.dedup.bam | **(with spike-in)** alignment file in binary format, which can be used for bigwig generation and peak calling |
 | .dedup.bam | **(non spike-in)** this is the alignment file in binary format  |
+|.bw| BigWig file for visualizing ChIP results|
 
 
 ChIP-FRiP uses MACS2 and the default .narrowPeak extension for BED files.
@@ -152,13 +153,13 @@ ChIP-FRiP uses MACS2 and the default .narrowPeak extension for BED files.
 ***Note:*** *BAM files can also be used for customized bigwig generation and peak calling.
 For example, if you want to analyze a non spike-in sample with customized macs2 parameters:*
 ```
- macs2 callpeak --broad -t filename.dedup.bam -n output_filename_prefix --outdir output_directory/ --gsize 2652783500 -q 0.05
+ macs2 callpeak -t filename.dedup.bam -n output_filename_prefix --outdir output_directory/ --gsize 2652783500 -q 0.05
 ```
 
 ## Computing FRiPs
 
 ### Creating metadata table
-To create metadata file, modifying `../config/fetch_metadata_config.yml`, and run
+To create the metadata file, modify `../config/fetch_metadata_config.yml`, and run
 ```
 python fetch_metadata.py config/fetch_metadata_config.yml
 ```
@@ -181,7 +182,7 @@ python fetch_metadata.py config/fetch_metadata_config.yml
 If all samples use same Peak_BED file/files, then you can ignore this column and input path to peak bed files in `create_frip_table_config.yml`
 
 ### Create FRiP table
-After generating BAM files and BED files FRiPs can be generated programmatically by modifying the config file `config/create_frip_table_config.yml` , and using `scripts/create_frip_table.py`:
+After generating BAM files and BED files, FRiPs can be generated programmatically by modifying the config file `config/create_frip_table_config.yml` , and using `scripts/create_frip_table.py`:
 
 ```
 python create_frip_table.py config/create_frip_table_config.yml

@@ -27,6 +27,7 @@ dependencies:
   - pysam
   - bioframe
   - cooltools
+  - deeptools
 
   - pip:
     - ffq
